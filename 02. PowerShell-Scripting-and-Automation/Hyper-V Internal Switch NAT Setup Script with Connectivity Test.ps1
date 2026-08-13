@@ -70,12 +70,4 @@ Write-Host "-----------------------------------"
 Write-Host "Existing NATs on host:"
 Get-NetNat | Format-Table Name, InternalIPInterfaceAddressPrefix
 
-# 9️⃣ Remove the current IP from the Default Switch adapter
-Get-NetIPAddress -InterfaceAlias "vEthernet (Default Switch)" -AddressFamily IPv4 |
-    Remove-NetIPAddress -Confirm:$false
 
-# Assign 192.168.100.1/24
-New-NetIPAddress `
-    -InterfaceAlias "vEthernet (Default Switch)" `
-    -IPAddress 192.168.100.1 `
-    -PrefixLength 24
