@@ -1,0 +1,14 @@
+# 1. List all Intune-managed devices
+Get-MgDeviceManagementManagedDevice -All
+
+# 2. List compliance policies and evaluation status
+Get-MgDeviceManagementDeviceCompliancePolicy -All
+
+# 3. Get device configuration profiles
+Get-MgDeviceManagementDeviceConfiguration -All
+
+# 4. Get detected software inventory across managed devices
+Get-MgDeviceManagementDetectedApp -All
+
+# 5. Run raw Graph API calls for advanced/unsupported Intune features
+Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices"
