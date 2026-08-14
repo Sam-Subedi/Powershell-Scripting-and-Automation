@@ -1,1 +1,12 @@
-
+1. Get-VMSwitch`
+2. Get-NetIPConfiguration -InterfaceAlias "vEthernet (Default Switch)"`
+3. Get-NetAdapter -Name "vEthernet (Default Switch)"`
+4. Get-NetAdapter | Where-Object {$_.Name -like "*Default Switch*"}`
+5. Get-NetIPAddress -InterfaceAlias "vEthernet (Default Switch)" -AddressFamily IPv4`
+6. Get-Service hns`
+7. Get-HnsNetwork | Format-List *`
+8. Get-HnsEndpoint`
+9. Get-HnsEndpoint | Format-List *`
+10. Get-Command -Module HostNetworkingService`
+11. Get-NetIPConfiguration -All`
+12. C:\Windows\System32\Sysprep\Sysprep.exe /oobe /generalize /mode:vm /shutdown`
