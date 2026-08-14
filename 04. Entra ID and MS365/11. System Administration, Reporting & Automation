@@ -1,0 +1,24 @@
+# 1. Record PowerShell console session activity to a file
+Start-Transcript -Path "C:\Logs\PowerShellSession.log"
+Stop-Transcript
+
+# 2. Export user query to CSV report
+Get-MgUser -All | Select-Object DisplayName, UserPrincipalName, Department | Export-Csv -Path "C:\Reports\Users.csv" -NoTypeInformation
+
+# 3. Import CSV data for bulk operations
+$Users = Import-Csv -Path "C:\BulkUsers.csv"
+
+# 4. Run commands on remote servers (WinRM)
+Invoke-Command -ComputerName "Server01" -ScriptBlock { Get-Service -Name "Spooler" }
+
+# 5. Create reusable remote session
+$Session = New-PSSession -ComputerName "Server01"
+
+# 6. Test network port connectivity (e.g., WinRM / Exchange ports)
+Test-NetConnection -ComputerName "outlook.office365.com" -Port 443
+
+# 7. Search Windows Event Logs for critical errors
+Get-WinEvent -FilterHashtable @{LogName='System'; Level=2} -MaxEvents 20
+
+# 8. Check and restart a service
+Get-Service -Name "W32Time" | Restart-Service
