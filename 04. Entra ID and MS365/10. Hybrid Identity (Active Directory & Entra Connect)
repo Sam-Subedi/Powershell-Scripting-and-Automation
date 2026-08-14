@@ -1,0 +1,14 @@
+# 1. Query on-premises Active Directory user
+Get-ADUser -Identity "username" -Properties *
+
+# 2. Create on-premises AD user
+New-ADUser -Name "John Smith" -SamAccountName "jsmith" -UserPrincipalName "jsmith@domain.com" -Enabled $true
+
+# 3. Check on-premises AD group members
+Get-ADGroupMember -Identity "Domain Admins"
+
+# 4. Force Delta Sync from On-Premises AD to Entra ID (Entra Connect Server)
+Start-ADSyncSyncCycle -PolicyType Delta
+
+# 5. Force Full Sync from On-Premises AD to Entra ID
+Start-ADSyncSyncCycle -PolicyType Initial
