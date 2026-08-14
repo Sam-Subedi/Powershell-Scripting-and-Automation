@@ -1,0 +1,9 @@
+# 1. View tenant license inventory (SKUs & Available Seats)
+Get-MgSubscribedSku | Select-Object SkuPartNumber, ActiveUnits, @{N='Consumed';E={$_.ConsumedUnits}}
+
+# 2. Assign a license to a user
+$Sku = Get-MgSubscribedSku | Where-Object {$_.SkuPartNumber -eq "ENTERPRISEPACK"}
+Set-MgUserLicense -UserId "user@domain.com" -AddLicenses @{SkuId = $Sku.SkuId} -RemoveLicenses @()
+
+# 3. Remove a license from a user
+Set-MgUserLicense -UserId "user@domain.com" -AddLicenses @() -RemoveLicenses @($Sku.SkuId)
