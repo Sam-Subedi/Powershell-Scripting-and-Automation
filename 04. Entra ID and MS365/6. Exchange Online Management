@@ -1,0 +1,32 @@
+# 1. List all user mailboxes
+Get-Mailbox -ResultSize Unlimited -RecipientTypeDetails UserMailbox
+
+# 2. Get specific mailbox settings
+Get-Mailbox -Identity "user@domain.com"
+
+# 3. Check mailbox storage usage & item counts
+Get-MailboxStatistics -Identity "user@domain.com" | Select-Object DisplayName, TotalItemSize, ItemCount
+
+# 4. View mailbox delegation permissions
+Get-MailboxPermission -Identity "shared@domain.com" | Where-Object {$_.User -notlike "NT AUTHORITY\*"}
+
+# 5. Grant Full Access permissions to a mailbox
+Add-MailboxPermission -Identity "shared@domain.com" -User "user@domain.com" -AccessRights FullAccess -AutoMapping $true
+
+# 6. Revoke mailbox permissions
+Remove-MailboxPermission -Identity "shared@domain.com" -User "user@domain.com" -AccessRights FullAccess -Confirm:$false
+
+# 7. Search all Exchange recipients (Mailboxes, Groups, Contacts)
+Get-Recipient -Identity "searchterm"
+
+# 8. List distribution groups
+Get-DistributionGroup -ResultSize Unlimited
+
+# 9. Add member to a distribution group
+Add-DistributionGroupMember -Identity "team@domain.com" -Member "user@domain.com"
+
+# 10. Check active mail flow (transport) rules
+Get-TransportRule
+
+# 11. Create a transport rule (e.g., External email disclaimer)
+New-TransportRule -Name "External Email Notice" -FromScope "NotInOrganization" -ApplyHtmlDisclaimerText "<b>[EXTERNAL EMAIL]</b> Use caution."
