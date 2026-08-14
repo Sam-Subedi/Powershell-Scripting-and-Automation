@@ -1,0 +1,20 @@
+# 1. List all Teams in the organization
+Get-Team
+
+# 2. Get members of a specific Team
+Get-TeamUser -GroupId "<GroupID>"
+
+# 3. Add a user to a Team
+Add-TeamUser -GroupId "<GroupID>" -User "user@domain.com" -Role "Member"
+
+# 4. Remove a user from a Team
+Remove-TeamUser -GroupId "<GroupID>" -User "user@domain.com"
+
+# 5. List SharePoint Online sites
+Get-SPOSite -Detailed
+
+# 6. Check users/permissions on a SharePoint site
+Get-SPOUser -Site "https://<tenant>.sharepoint.com/sites/sitename"
+
+# 7. Adjust SharePoint site storage quota
+Set-SPOSite -Identity "https://<tenant>.sharepoint.com/sites/sitename" -StorageQuota 10240
