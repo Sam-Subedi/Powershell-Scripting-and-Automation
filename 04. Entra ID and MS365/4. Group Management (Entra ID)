@@ -1,0 +1,14 @@
+# 1. List all groups in the directory
+Get-MgGroup -All
+
+# 2. Create a new Security Group
+New-MgGroup -DisplayName "Sec-Engineering" -MailEnabled:$false -SecurityEnabled:$true -MailNickname "sec-eng"
+
+# 3. Get members of a specific group
+Get-MgGroupMember -GroupId "<GroupID>" -All
+
+# 4. Add a user to a group
+New-MgGroupMember -GroupId "<GroupID>" -DirectoryObjectId "<UserObjectId>"
+
+# 5. Remove a member from a group
+Remove-MgGroupMemberByRef -GroupId "<GroupID>" -DirectoryObjectId "<UserObjectId>"
