@@ -11,3 +11,5 @@
 11. Get-NetIPConfiguration -All`
 12. Set-VM -Name "DC1" -CheckpointType ProductionOnly
 13. C:\Windows\System32\Sysprep\Sysprep.exe /oobe /generalize /mode:vm /shutdown
+14. C:\Windows\System32\Sysprep\Sysprep.exe /oobe /generalize /mode:vm /shutdown /unattend:unattend.xml
+15. C:\Windows\System32\Sysprep\sysprep.exe /generalize /oobe /shutdown /unattend:unattend.xml
