@@ -1,0 +1,68 @@
+Get-NetAdapter
+
+Get-NetAdapter | Format-Table Name, InterfaceDescription, Status, LinkSpeed, MacAddress
+
+Get-NetNat
+
+Get-VMSwitch
+
+Get-VMSwitchTeam
+
+Get-VMSwitch | Format-List Name, SwitchType, NetAdapterName, AllowManagementOS
+
+Get-VMSwitch | Select-Object Name, SwitchType, NetAdapterName
+
+Get-VMNetworkAdapterVlan
+
+Get-VMNetworkAdapter -VMName "VMName"
+
+Get-VMNetworkAdapter -All
+
+Test-NetConnection 192.168.10.1 -Port 4444
+
+Get-NetIPAddress | Sort-Object InterfaceAlias
+
+Get-VMNetworkAdapterVlan -VMName "VMName"
+
+Get-VMNetworkAdapter -All | Get-VMNetworkAdapterVlan
+
+Get-VMNetworkAdapterVlan -VMName "VMName" -VMNetworkAdapterName "Network Adapter"
+
+Get-VMNetworkAdapterVlan -VMName "Sophos Firewall" -VMNetworkAdapterName "Network Adapter"
+
+Get-VMNetworkAdapterVlan -VMName "Windows 10 (PC1)"
+
+Set-VMNetworkAdapterVlan -VMName "Windows 10 (PC1)" -Access -VlanId 20
+
+Set-VMNetworkAdapterVlan -VMName "Windows 10 (PC1)" -Untagged (Removes Vlan Tagging)
+
+Set-VMNetworkAdapterVlan -VMName "Sophos Firewall" -Trunk -AllowedVlanIdList "1-4094" -NativeVlanId 0
+
+Set-VMNetworkAdapterVlan -VMName "Sophos Firewall" -Trunk -AllowedVlanIdList "20,30,40" -NativeVlanId 0
+
+Get-NetIPInterface | Where-Object {$_.ConnectionState -eq "Connected"}
+
+Get-NetAdapter | Format-Table -Auto Name, Status, InterfaceDescription
+
+Get-NetAdapter | Select Name, Status, InterfaceDescription
+
+Get-NetIPInterface | Where-Object {$_.InterfaceAlias -like "*Default Switch*"}
+
+Get-NetAdapter -IncludeHidden | Where-Object {$_.Name -like "*Local Area Connection*"} | Format-Table Name, Status, InterfaceDescription
+
+Quick Command:
+Get-VMNetworkAdapter -All | ForEach-Object {
+    $vlan = Get-VMNetworkAdapterVlan -VMNetworkAdapter $_
+
+    [PSCustomObject]@{
+        VM                = $_.VMName
+        Adapter           = $_.Name
+        Switch            = $_.SwitchName
+        OperationMode     = $vlan.OperationMode
+        AccessVLAN        = $vlan.AccessVlanId
+        NativeVLAN        = $vlan.NativeVlanId
+        AllowedVLANs      = $vlan.AllowedVlanIdList
+        DynamicVLAN       = $vlan.DynamicVlanId
+    }
+} | Format-Table -AutoSize
+
