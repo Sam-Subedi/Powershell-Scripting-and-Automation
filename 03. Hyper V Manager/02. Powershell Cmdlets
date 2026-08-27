@@ -13,3 +13,7 @@
 13. C:\Windows\System32\sysprep\sysprep.exe /oobe /generalize /mode:vm /shutdown
 14. C:\Windows\System32\sysprep\sysprep.exe /oobe /generalize /mode:vm /shutdown /unattend:unattend.xml
 15. C:\Windows\System32\sysprep\sysprep.exe /generalize /oobe /shutdown /unattend:unattend.xml
+16. Get-VMProcessor -VMName "GNS3 VM" | Select-Object ExposeVirtualizationExtensions
+17. Set-VMProcessor -VMName "GNS3 VM" -ExposeVirtualizationExtensions $true
+
+
