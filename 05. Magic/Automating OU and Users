@@ -1,1 +1,408 @@
+# ============================================================
+# Active Directory Bulk User Deployment
+# Domain: abc.local
+#
+# Structure:
+#
+# abc.local
+# └── Employee
+#     ├── Sales
+#     │   ├── Users
+#     │   ├── Computers
+#     │   └── Groups
+#     ├── HR
+#     │   ├── Users
+#     │   ├── Computers
+#     │   └── Groups
+#     ├── IT
+#     │   ├── Users
+#     │   ├── Computers
+#     │   └── Groups
+#     ├── Finance
+#     │   ├── Users
+#     │   ├── Computers
+#     │   └── Groups
+#     └── Marketing
+#         ├── Users
+#         ├── Computers
+#         └── Groups
+# ============================================================
 
+Set-ExecutionPolicy Unrestricted -Scope Process
+
+Import-Module ActiveDirectory
+
+# ------------------------------------------------------------
+# CSV FILE
+# ------------------------------------------------------------
+
+$csvPath = "C:\bulkuser.csv"
+
+if (-not (Test-Path $csvPath)) {
+    Write-Error "CSV file not found: $csvPath"
+    exit
+}
+
+$userList = Import-Csv -Path $csvPath
+
+
+# ------------------------------------------------------------
+# DOMAIN SETTINGS
+# ------------------------------------------------------------
+
+$domainDN = "DC=abc,DC=local"
+
+$employeeOU = "OU=Employee,$domainDN"
+
+
+# ------------------------------------------------------------
+# DEFAULT PASSWORD
+# ------------------------------------------------------------
+
+$password = ConvertTo-SecureString `
+    "Mango123" `
+    -AsPlainText `
+    -Force
+
+
+# ------------------------------------------------------------
+# DEPARTMENTS
+# ------------------------------------------------------------
+
+$departments = @(
+    "Sales",
+    "HR",
+    "IT",
+    "Finance",
+    "Marketing"
+)
+
+
+# ============================================================
+# CREATE MAIN EMPLOYEE OU
+# ============================================================
+
+if (-not (Get-ADOrganizationalUnit `
+    -Identity $employeeOU `
+    -ErrorAction SilentlyContinue)) {
+
+    New-ADOrganizationalUnit `
+        -Name "Employee" `
+        -Path $domainDN
+
+    Write-Host "Created Employee OU" -ForegroundColor Cyan
+}
+else {
+    Write-Host "Employee OU already exists" -ForegroundColor Yellow
+}
+
+
+# ============================================================
+# CREATE DEPARTMENT STRUCTURE
+# ============================================================
+
+foreach ($dept in $departments) {
+
+    Write-Host ""
+    Write-Host "Processing department: $dept" -ForegroundColor Magenta
+
+    # --------------------------------------------------------
+    # Department OU
+    # --------------------------------------------------------
+
+    $deptOU = "OU=$dept,$employeeOU"
+
+    if (-not (Get-ADOrganizationalUnit `
+        -Identity $deptOU `
+        -ErrorAction SilentlyContinue)) {
+
+        New-ADOrganizationalUnit `
+            -Name $dept `
+            -Path $employeeOU
+
+        Write-Host "Created $dept OU" -ForegroundColor Cyan
+    }
+
+
+    # --------------------------------------------------------
+    # Users OU
+    # --------------------------------------------------------
+
+    $usersOU = "OU=Users,$deptOU"
+
+    if (-not (Get-ADOrganizationalUnit `
+        -Identity $usersOU `
+        -ErrorAction SilentlyContinue)) {
+
+        New-ADOrganizationalUnit `
+            -Name "Users" `
+            -Path $deptOU
+
+        Write-Host "Created Users OU in $dept" -ForegroundColor Cyan
+    }
+
+
+    # --------------------------------------------------------
+    # Computers OU
+    # --------------------------------------------------------
+
+    $computersOU = "OU=Computers,$deptOU"
+
+    if (-not (Get-ADOrganizationalUnit `
+        -Identity $computersOU `
+        -ErrorAction SilentlyContinue)) {
+
+        New-ADOrganizationalUnit `
+            -Name "Computers" `
+            -Path $deptOU
+
+        Write-Host "Created Computers OU in $dept" -ForegroundColor Cyan
+    }
+
+
+    # --------------------------------------------------------
+    # Groups OU
+    # --------------------------------------------------------
+
+    $groupsOU = "OU=Groups,$deptOU"
+
+    if (-not (Get-ADOrganizationalUnit `
+        -Identity $groupsOU `
+        -ErrorAction SilentlyContinue)) {
+
+        New-ADOrganizationalUnit `
+            -Name "Groups" `
+            -Path $deptOU
+
+        Write-Host "Created Groups OU in $dept" -ForegroundColor Cyan
+    }
+
+
+    # --------------------------------------------------------
+    # Department Security Group
+    # --------------------------------------------------------
+
+    $deptGroupName = "$dept Group"
+
+    $existingGroup = Get-ADGroup `
+        -Filter "Name -eq '$deptGroupName'" `
+        -SearchBase $groupsOU `
+        -ErrorAction SilentlyContinue
+
+    if (-not $existingGroup) {
+
+        New-ADGroup `
+            -Name $deptGroupName `
+            -SamAccountName "$dept-Group" `
+            -GroupScope Global `
+            -GroupCategory Security `
+            -Path $groupsOU
+
+        Write-Host "Created group: $deptGroupName" -ForegroundColor Green
+    }
+    else {
+
+        Write-Host "Group already exists: $deptGroupName" -ForegroundColor Yellow
+    }
+}
+
+
+# ============================================================
+# CREATE USERS FROM CSV
+# ============================================================
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Starting user deployment..." -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+
+
+foreach ($user in $userList) {
+
+    # --------------------------------------------------------
+    # CSV VALUES
+    # --------------------------------------------------------
+
+    $GivenName  = $user.FirstName.Trim()
+    $LastName   = $user.LastName.Trim()
+    $sam        = $user.Username.Trim()
+    $department = $user.Department.Trim()
+    $groupName  = $user.Group.Trim()
+    $ouName     = $user.OU.Trim()
+
+
+    # --------------------------------------------------------
+    # Validate department
+    # --------------------------------------------------------
+
+    if ($department -notin $departments) {
+
+        Write-Warning `
+            "Invalid department '$department' for user $sam"
+
+        continue
+    }
+
+
+    # --------------------------------------------------------
+    # Validate OU
+    # --------------------------------------------------------
+
+    if ($ouName -notin $departments) {
+
+        Write-Warning `
+            "Invalid OU '$ouName' for user $sam"
+
+        continue
+    }
+
+
+    # --------------------------------------------------------
+    # Full name
+    # --------------------------------------------------------
+
+    $FullName = "$GivenName $LastName"
+
+
+    # --------------------------------------------------------
+    # UPN
+    # --------------------------------------------------------
+
+    $upn = "$sam@abc.local"
+
+
+    # --------------------------------------------------------
+    # User destination OU
+    #
+    # OU=Users,OU=Sales,OU=Employee,DC=abc,DC=local
+    # --------------------------------------------------------
+
+    $usersOU = `
+        "OU=Users,OU=$ouName,$employeeOU"
+
+
+    # --------------------------------------------------------
+    # Groups destination OU
+    # --------------------------------------------------------
+
+    $groupsOU = `
+        "OU=Groups,OU=$ouName,$employeeOU"
+
+
+    # --------------------------------------------------------
+    # Check if user already exists
+    # --------------------------------------------------------
+
+    $existingUser = Get-ADUser `
+        -Filter "SamAccountName -eq '$sam'" `
+        -ErrorAction SilentlyContinue
+
+
+    # ========================================================
+    # CREATE USER
+    # ========================================================
+
+    if (-not $existingUser) {
+
+        try {
+
+            New-ADUser `
+                -Name $FullName `
+                -GivenName $GivenName `
+                -Surname $LastName `
+                -SamAccountName $sam `
+                -UserPrincipalName $upn `
+                -AccountPassword $password `
+                -Path $usersOU `
+                -Department $department `
+                -Enabled $true `
+                -ChangePasswordAtLogon $true `
+                -ErrorAction Stop
+
+            Write-Host `
+                "Created: $sam -> $usersOU" `
+                -ForegroundColor Green
+
+        }
+        catch {
+
+            Write-Warning `
+                "Failed to create $sam : $($_.Exception.Message)"
+
+            continue
+        }
+
+    }
+    else {
+
+        Write-Host `
+            "User already exists: $sam" `
+            -ForegroundColor Yellow
+    }
+
+
+    # ========================================================
+    # ADD USER TO DEPARTMENT GROUP
+    # ========================================================
+
+    $group = Get-ADGroup `
+        -Filter "Name -eq '$groupName'" `
+        -SearchBase $groupsOU `
+        -ErrorAction SilentlyContinue
+
+
+    if ($group) {
+
+        try {
+
+            Add-ADGroupMember `
+                -Identity $group `
+                -Members $sam `
+                -ErrorAction Stop
+
+            Write-Host `
+                "Added $sam -> $groupName" `
+                -ForegroundColor Green
+
+        }
+        catch {
+
+            # Check if already a member
+            $isMember = Get-ADGroupMember `
+                -Identity $group `
+                -Recursive `
+                -ErrorAction SilentlyContinue |
+                Where-Object {
+                    $_.SamAccountName -eq $sam
+                }
+
+            if ($isMember) {
+
+                Write-Host `
+                    "$sam is already a member of $groupName" `
+                    -ForegroundColor Yellow
+            }
+            else {
+
+                Write-Warning `
+                    "Could not add $sam to $groupName : $($_.Exception.Message)"
+            }
+        }
+
+    }
+    else {
+
+        Write-Warning `
+            "Group '$groupName' not found in $groupsOU"
+    }
+}
+
+
+# ============================================================
+# FINISHED
+# ============================================================
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "User deployment completed." -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
