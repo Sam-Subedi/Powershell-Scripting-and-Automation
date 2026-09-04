@@ -1,0 +1,254 @@
+Powershell Cmdlets:
+# Test if a specific port is open on a server
+Test-NetConnection -ComputerName google.com -Port 443  or,Test-Netconnection google.com  or,Test-Netconnection google.com -port 443
+ 
+# Test-connection google.com  or,Test-connection google.com -Count 10 |Out-GridView
+
+# Test-NetConnection -ComputerName google.com -CommonTCPPort HTTP
+
+# Run a clean, detailed traceroute
+Test-NetConnection -ComputerName 8.8.8.8 -TraceRoute  or, Test-Netconnection google.com -Traceroute
+
+# Convert file lengths to Megabytes instantly
+Get-ChildItem | Select-Object Name, @{n="Size(MB)"; e={$_.Length / 1MB}}
+
+# Convert file lengths into human-readable Megabytes instantly
+Get-ChildItem *.* | Select-Object Name, @{Name="Size(MB)"; Expression={ [math]::round($_.Length / 1MB, 2) }}
+
+# Instant GUI Data Filtering: Append | Out-GridView -PassThru
+
+# Send Output Straight to Clipboard, Never copy text manually from the shell host
+Get-Service | Where-Object Status -eq 'Running' | Set-Clipboard
+
+# Test-NetConnection -ComputerName google.com -InformationLevel Detailed
+
+# Get-NetIPConfiguration -Detailed
+
+# Get-ADUser -Filter * | Select-Object Name, Enabled, LastLogonDate
+
+# (Get-Process -Name explorer).Path
+ 
+# Add-VMNetworkAdapterExtendedAcl
+ 
+# Set-VMNetworkAdapterVlan -Trunk
+
+# winget install Microsoft.WindowsAdminCenter
+
+
+Powershell Tricks:
+
+# |Out-GridView
+
+# check parameters in powershell console: Get-Item - and press Ctrl+Space
+
+# Just drag a folder or file from file explorer into a powershell console, it will paste the entire path
+
+# In ISE, ctrl+T opens up a new terminal so you can keep separate variables and run multiple scripts at once
+
+# You can provide any cmdlet to it and it'll render a simple UI for it including tabs for different parametersets. It also has a help button to launch the get-help -showwindow option:
+
+Show-Command
+
+get-help -showwindow
+
+# Know location of PS executables: where.exe pwsh
+
+# Get-History
+
+# Get-content (Get-PSReadlineOption).HistorySavePath
+
+# Command | clip
+
+# set-clipboard
+
+# ~ stands for $HOME
+
+# Ctrl R : You can browse you command history 
+
+# With Psreadline module you could use the inline-view or list-view(my favorite) and get the history while typing in the terminal, it is time saver
+
+# create all folders and parent folders using new-item -force
+
+
+How to Use Hyper-V Firewall Rules?
+Microsoft provides dedicated NetSecurity commands explicitly designed to leverage these APIs. To use them, open an Administrative PowerShell prompt on your Hyper-V host. 
+
+1. Create a Rule to Block Specific Traffic to a VM
+If you want to block a specific port (e.g., blocking standard HTTP port 80) to a targeted virtual machine, use the New-NetFirewallHyperVRule cmdlet.
+
+Example: New-NetFirewallHyperVRule -DisplayName "Block HTTP to WebVM" 
+                          -Direction Inbound 
+                          -Action Block 
+                          -Protocol TCP 
+                          -LocalPort 80
+
+2. Create a Rule to Allow Traffic Only from a Specific IP
+If you want to isolate a sensitive VM network card so that it only accepts administrative traffic (like RDP on port 3389) from a specific management subnet:
+
+Example: New-NetFirewallHyperVRule -DisplayName "Allow Admin RDP Only" 
+                          -Direction Inbound 
+                          -Action Allow 
+                          -Protocol TCP 
+                          -LocalPort 3389 
+                          -RemoteAddress "192.168.10.0/24"
+
+3. View All Active Hyper-V Switch Rules
+To audit what rules are currently running natively at the Hyper-V switch layer, run: Get-NetFirewallHyperVRule
+
+When should you use this instead of a normal firewall?
+
+Container Isolation: It is heavily used automatically by Windows to isolate network traffic for Windows Subsystem for Linux (WSL) and Docker/Windows Containers.
+
+Hypervisor-Level Enforcement: It stops malicious network traffic at the virtual switch level, saving the VM's CPU from processing bad packets.
+
+Immutable Security: Because the rule is enforced by the Hyper-V host, a user or hacker who gains Administrator rights inside the Virtual Machine still cannot bypass or disable the firewall rule.
+
+
+* You must run these commands on your Hyper-V host inside an Administrative PowerShell window to bind rules to a specific virtual machine's name or to completely block a VM from talking to other VMs on the same switch.
+
+Script 1: Bind a Hyper-V Firewall Rule to a Specific VM
+By default, standard HyperVRule commands apply globally to the virtual switches. To target a specific virtual machine, you must retrieve its internal Network Adapter ID (Port ID) and bind the rule directly to it using the -VMSwitchPortIds parameter.This script targets a specific VM (e.g., "ProductionSQL") and blocks inbound SSH traffic (Port 22) before it even reaches the VM's OS:
+
+# 1. Get the unique internal Switch Port ID of your target VM
+$VMPort = (Get-VMNetworkAdapter -VMName "ProductionSQL").Status.VMId
+
+# 2. Create the Hyper-V firewall rule specifically bound to that port
+New-NetFirewallHyperVRule -DisplayName "Block SSH to ProductionSQL" 
+                          -Direction Inbound 
+                          -Action Block 
+                          -Protocol TCP 
+                          -LocalPort 22 
+                          -VMSwitchPortIds $VMPort
+
+Script 2: Isolate a VM (Block it from talking to other VMs on the same switch)
+If you want to isolate a VM so it can talk to the internet/gateway but cannot probe, hack, or communicate with neighbor VMs on the exact same virtual network, you use VM Network Adapter Extended ACLs.This method creates an isolation boundary directly inside the virtual switch layer:
+
+# 1. Block ALL outbound traffic from this VM to the local subnet (e.g., 192.168.1.0/24)
+Add-VMNetworkAdapterExtendedAcl -VMName "IsolatedVM" 
+                                -Direction Outbound 
+                                -Action Deny 
+                                -LocalMacAddress $null 
+                                -RemoteMacAddress $null 
+                                -RemoteIpAddress "192.168.1.0/24" 
+                                -Weight 10
+
+# 2. Allow the VM to talk exclusively to your default gateway/router (e.g., 192.168.1.1)
+# (This ensures it can still get out to the Internet, but can't touch neighbor VMs)
+Add-VMNetworkAdapterExtendedAcl -VMName "IsolatedVM" 
+                                -Direction Outbound 
+                                -Action Allow 
+                                -LocalMacAddress $null 
+                                -RemoteMacAddress $null 
+                                -RemoteIpAddress "192.168.1.1" 
+                                -Weight 20
+
+Note: The Weight parameter tells Hyper-V which rule to process first. The higher weight (20) overrides the lower weight (10), allowing the gateway traffic through while blocking everything else.
+
+Script 3: How to clear or reset these rules if you make a mistake?
+If you ever need to completely remove these rules and restore standard communications, use these quick reset commands:
+
+# To remove the Hyper-V Firewall port rule:
+Remove-NetFirewallHyperVRule -DisplayName "Block SSH to ProductionSQL"
+
+# To clear all isolation rules from a VM:
+Remove-VMNetworkAdapterExtendedAcl -VMName "IsolatedVM"
+
+Script 4: Check Existing ACL Rules on a VM
+Before adding new rules, it is best practice to see what blocks or allowances are already configured on a virtual machine. This command dumps every Extended Access Control List (ACL) attached to a specific network adapter:
+
+# View all custom network security filters applied to a specific VM
+Get-VMNetworkAdapterExtendedAcl -VMName "IsolatedVM" | Select-Object Direction, Action, RemoteIpAddress, Weight
+
+Note: If this returns absolutely nothing, it means the virtual switch is running wide open with default configurations (no rules applied).
+
+Script 5: Build a DMZ Rule (Talk ONLY to one specific server)
+If you have a front-end web server or a DMZ machine that should only be allowed to talk to a single backend database server (and absolutely nothing else on your local network), you use a layered approach using weights.This example allows a VM named "WebServer" to communicate exclusively with a Database Server at 192.168.1.50, while completely blocking it from the rest of your local private network (192.168.1.0/24):
+
+# 1. ALLOW traffic to and from the specific database server (Highest priority: Weight 30)
+Add-VMNetworkAdapterExtendedAcl -VMName "WebServer" -Direction Both -Action Allow -RemoteIpAddress "192.168.1.50" -Weight 30
+
+# 2. ALLOW traffic to the gateway/router so it can access the Internet (Weight 20)
+Add-VMNetworkAdapterExtendedAcl -VMName "WebServer" -Direction Both -Action Allow -RemoteIpAddress "192.168.1.1" -Weight 20
+
+# 3. DENY all other traffic to the entire local network subnet (Lowest priority: Weight 10)
+Add-VMNetworkAdapterExtendedAcl -VMName "WebServer" -Direction Both -Action Deny -RemoteIpAddress "192.168.1.0/24" -Weight 10
+
+How the Layered Rules Work?
+Hyper-V processes rules starting from the highest weight down to the lowest. If the VM tries to talk to 192.168.1.50, it hits the first rule (Weight 30) and is Allowed. If it tries to talk to 192.168.1.1 (the internet gateway), it bypasses the first rule, hits the second rule (Weight 20), and is Allowed. If it tries to scan or attack a random neighbor machine like 192.168.1.155, it falls through to the final rule (Weight 10) and is Denied.
+
+
+* How to adapt these rules to filter traffic by MAC Addresses instead of IP addresses?
+To filter virtual machine traffic by MAC addresses instead of IP addresses, you use the exact same Add-VMNetworkAdapterExtendedAcl cmdlet. However, you leave the -RemoteIpAddress blank and use the -RemoteMacAddress parameter instead. Filtering by MAC address is highly secure because it operates at Layer 2 (Data Link Layer). This means even if a VM changes its IP address inside the guest OS, the virtual switch will still block or allow traffic based on the hardcoded hardware identity of the target machine.
+
+Step 1: Find the MAC Address of the Target Computer
+Get-VMNetworkAdapter -VMName "TargetVMName" | Select-Object VMName, MacAddress
+Format Note: Hyper-V requires MAC addresses to be formatted as 12 continuous hex characters without dashes or colons (e.g., 00155D010A12)
+
+Step 2: Apply MAC-Based Firewall Rules
+
+Scenario A: Create a "Mac Whitelist" (Block all neighbors except one specific server)
+If you want a VM named "SecureVM" to communicate only with a specific physical backup server or appliance on your network, while completely cutting off communication to all other network cards:
+
+# 1. ALLOW traffic to the specific trusted MAC address (Higher Priority)
+Add-VMNetworkAdapterExtendedAcl -VMName "SecureVM" 
+                                -Direction Both 
+                                -Action Allow 
+                                -RemoteMacAddress "00155D010A12" 
+                                -Weight 20
+
+# 2. DENY traffic to every other MAC address on the network (Lower Priority)
+# (The asterisk "*" acts as a wildcard for all MAC addresses)
+Add-VMNetworkAdapterExtendedAcl -VMName "SecureVM" 
+                                -Direction Both 
+                                -Action Deny 
+                                -RemoteMacAddress "*" 
+                                -Weight 10
+
+
+Scenario B: Block a Specific Malicious or Rogue Device If you suspect a specific machine or virtual appliance on your network is compromised, you can hard-block your VM from interacting with it entirely:
+
+Add-VMNetworkAdapterExtendedAcl -VMName "SecureVM" 
+                                -Direction Both 
+                                -Action Deny 
+                                -RemoteMacAddress "0025B3A19C4F" 
+                                -Weight 50
+
+How to Check and Remove MAC Rules?
+To verify that your MAC filters are properly attached to the network adapter, run:
+Get-VMNetworkAdapterExtendedAcl -VMName "SecureVM" | Select-Object Direction, Action, RemoteMacAddress, Weight
+
+If you need to completely clear a MAC-based rule later, use:
+Remove-VMNetworkAdapterExtendedAcl -VMName "SecureVM" -Direction Both -Action Deny -RemoteMacAddress "*"
+
+* How Hyper-V Port Mirroring works to capture and analyze this network traffic?
+
+Hyper-V Port Mirroring allows you to copy all the network traffic entering or leaving a specific virtual machine and stream it to a second monitoring virtual machine. This is incredibly useful for network troubleshooting, security auditing, or feeding network data into an intrusion detection system (IDS) or packet sniffer (like Wireshark). Because this happens at the hypervisor layer, the target VM has no idea its traffic is being duplicated. Configuring Hyper-V Port Mirroring is a two-step process: you must configure one VM as the Source (the machine you want to spy on) and another VM as the Destination (the machine running Wireshark/IDS).
+
+Step 1: Configure the Source VM (The Machine Being Monitored)
+You tell the virtual switch to copy this VM's traffic. Run this in an Administrative PowerShell window on your Hyper-V host:
+
+# Set the VM network adapter to send a copy of all its traffic
+Set-VMNetworkAdapter -VMName "ProductionWebServer" -PortMirroring Source
+
+
+Step 2: Configure the Destination VM (The Monitoring Machine)
+You tell the virtual switch to deliver the copied traffic to this specific machine's network card.
+
+# Set the monitoring VM network adapter to receive the copied traffic
+Set-VMNetworkAdapter -VMName "WiresharkMonitoringVM" -PortMirroring Destination
+
+Step 3: Configure the Guest OS to capture the traffic
+Once the Hyper-V switch is mirroring the ports, log into your Destination VM (e.g., WiresharkMonitoringVM):
+Open Wireshark (or your preferred packet capture tool).
+Start a capture on the network interface connected to that virtual switch.
+You will immediately begin seeing packets belonging to IP addresses that do not match your monitoring VM.
+
+How to Turn Off Port Mirroring?
+ When you are finished troubleshooting or monitoring, you should turn port mirroring off to save hypervisor CPU and network overhead. Run these commands to reset the adapters back to normal:
+
+# Reset both VMs back to default network behavior
+Set-VMNetworkAdapter -VMName "ProductionWebServer" -PortMirroring None
+Set-VMNetworkAdapter -VMName "WiresharkMonitoringVM" -PortMirroring None
+
+Crucial Requirement: The Same Virtual SwitchFor basic Hyper-V port mirroring to work, both virtual machines must be connected to the exact same Virtual Switch on the same physical host. If your VMs are on different cluster nodes or different switches, standard mirroring won't bridge across them without advanced Microsoft Software-Defined Networking (SDN) configurations.
+
