@@ -22,7 +22,7 @@ Get-Service | Where-Object Status -eq 'Running' | Set-Clipboard
 
 # Test-NetConnection -ComputerName google.com -InformationLevel Detailed
 
-# Get-NetIPConfiguration -Detailed
+# Get-NetIPConfiguration -Detailed or, Get-NetIPConfiguration -All
 
 # Get-ADUser -Filter * | Select-Object Name, Enabled, LastLogonDate
 
