@@ -1,5 +1,5 @@
 # ============================================================
-# Active Directory Bulk User Deployment
+# ACTIVE DIRECTORY BULK USER DEPLOYMENT
 # Domain: abc.local
 #
 # Structure:
@@ -10,65 +10,61 @@
 #     │   ├── Users
 #     │   ├── Computers
 #     │   └── Groups
+#     │       └── Sales Group
 #     ├── HR
 #     │   ├── Users
 #     │   ├── Computers
 #     │   └── Groups
+#     │       └── HR Group
 #     ├── IT
 #     │   ├── Users
 #     │   ├── Computers
 #     │   └── Groups
+#     │       └── IT Group
 #     ├── Finance
 #     │   ├── Users
 #     │   ├── Computers
 #     │   └── Groups
+#     │       └── Finance Group
 #     └── Marketing
 #         ├── Users
 #         ├── Computers
 #         └── Groups
+#             └── Marketing Group
+#
+# IMPORTANT:
+# Users are NOT placed inside Groups OU.
+# Users stay in their Users OU.
+# Users are AD MEMBERS of their department group.
+# ============================================================
+
+
+# ============================================================
+# SETTINGS
 # ============================================================
 
 Set-ExecutionPolicy Unrestricted -Scope Process
 
 Import-Module ActiveDirectory
 
-# ------------------------------------------------------------
-# CSV FILE
-# ------------------------------------------------------------
 
+# CSV location
 $csvPath = "C:\bulkuser.csv"
 
-if (-not (Test-Path $csvPath)) {
-    Write-Error "CSV file not found: $csvPath"
-    exit
-}
 
-$userList = Import-Csv -Path $csvPath
-
-
-# ------------------------------------------------------------
-# DOMAIN SETTINGS
-# ------------------------------------------------------------
-
+# Domain
 $domainDN = "DC=abc,DC=local"
 
+
+# Main OU
 $employeeOU = "OU=Employee,$domainDN"
 
 
-# ------------------------------------------------------------
-# DEFAULT PASSWORD
-# ------------------------------------------------------------
-
-$password = ConvertTo-SecureString `
-    "Mango123" `
-    -AsPlainText `
-    -Force
+# Default password
+$defaultPassword = "Mango123"
 
 
-# ------------------------------------------------------------
-# DEPARTMENTS
-# ------------------------------------------------------------
-
+# Departments
 $departments = @(
     "Sales",
     "HR",
@@ -79,32 +75,91 @@ $departments = @(
 
 
 # ============================================================
-# CREATE MAIN EMPLOYEE OU
+# CHECK CSV
 # ============================================================
 
-if (-not (Get-ADOrganizationalUnit `
-    -Identity $employeeOU `
-    -ErrorAction SilentlyContinue)) {
+if (-not (Test-Path -LiteralPath $csvPath)) {
 
-    New-ADOrganizationalUnit `
-        -Name "Employee" `
-        -Path $domainDN
+    Write-Host ""
+    Write-Host "ERROR: CSV file not found:" -ForegroundColor Red
+    Write-Host $csvPath -ForegroundColor Yellow
+    Write-Host ""
 
-    Write-Host "Created Employee OU" -ForegroundColor Cyan
+    exit 1
+}
+
+$userList = Import-Csv -LiteralPath $csvPath
+
+Write-Host ""
+Write-Host "CSV loaded successfully." -ForegroundColor Green
+Write-Host "Users found: $($userList.Count)" -ForegroundColor Cyan
+
+
+# ============================================================
+# CHECK DOMAIN
+# ============================================================
+
+try {
+
+    Get-ADDomain -Identity "abc.local" -ErrorAction Stop | Out-Null
+
+    Write-Host "Connected to abc.local" -ForegroundColor Green
+}
+catch {
+
+    Write-Host ""
+    Write-Host "ERROR: Cannot connect to abc.local" -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
+
+    exit 1
+}
+
+
+# ============================================================
+# CREATE EMPLOYEE OU
+# ============================================================
+
+$employeeExists = Get-ADOrganizationalUnit `
+    -Filter "DistinguishedName -eq '$employeeOU'" `
+    -ErrorAction SilentlyContinue
+
+
+if (-not $employeeExists) {
+
+    try {
+
+        New-ADOrganizationalUnit `
+            -Name "Employee" `
+            -Path $domainDN `
+            -ErrorAction Stop
+
+        Write-Host "Created Employee OU" -ForegroundColor Green
+    }
+    catch {
+
+        Write-Host "ERROR creating Employee OU" -ForegroundColor Red
+        Write-Host $_.Exception.Message -ForegroundColor Red
+
+        exit 1
+    }
 }
 else {
+
     Write-Host "Employee OU already exists" -ForegroundColor Yellow
 }
 
 
 # ============================================================
-# CREATE DEPARTMENT STRUCTURE
+# CREATE DEPARTMENT OUs
 # ============================================================
 
 foreach ($dept in $departments) {
 
     Write-Host ""
-    Write-Host "Processing department: $dept" -ForegroundColor Magenta
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host "Setting up $dept" -ForegroundColor Cyan
+    Write-Host "========================================" -ForegroundColor Cyan
+
 
     # --------------------------------------------------------
     # Department OU
@@ -112,15 +167,34 @@ foreach ($dept in $departments) {
 
     $deptOU = "OU=$dept,$employeeOU"
 
-    if (-not (Get-ADOrganizationalUnit `
-        -Identity $deptOU `
-        -ErrorAction SilentlyContinue)) {
 
-        New-ADOrganizationalUnit `
-            -Name $dept `
-            -Path $employeeOU
+    $deptExists = Get-ADOrganizationalUnit `
+        -Filter "DistinguishedName -eq '$deptOU'" `
+        -ErrorAction SilentlyContinue
 
-        Write-Host "Created $dept OU" -ForegroundColor Cyan
+
+    if (-not $deptExists) {
+
+        try {
+
+            New-ADOrganizationalUnit `
+                -Name $dept `
+                -Path $employeeOU `
+                -ErrorAction Stop
+
+            Write-Host "Created $dept OU" -ForegroundColor Green
+        }
+        catch {
+
+            Write-Host "ERROR creating $dept OU" -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor Red
+
+            continue
+        }
+    }
+    else {
+
+        Write-Host "$dept OU already exists" -ForegroundColor Yellow
     }
 
 
@@ -130,15 +204,34 @@ foreach ($dept in $departments) {
 
     $usersOU = "OU=Users,$deptOU"
 
-    if (-not (Get-ADOrganizationalUnit `
-        -Identity $usersOU `
-        -ErrorAction SilentlyContinue)) {
 
-        New-ADOrganizationalUnit `
-            -Name "Users" `
-            -Path $deptOU
+    $usersExists = Get-ADOrganizationalUnit `
+        -Filter "DistinguishedName -eq '$usersOU'" `
+        -ErrorAction SilentlyContinue
 
-        Write-Host "Created Users OU in $dept" -ForegroundColor Cyan
+
+    if (-not $usersExists) {
+
+        try {
+
+            New-ADOrganizationalUnit `
+                -Name "Users" `
+                -Path $deptOU `
+                -ErrorAction Stop
+
+            Write-Host "Created Users OU" -ForegroundColor Green
+        }
+        catch {
+
+            Write-Host "ERROR creating Users OU for $dept" -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor Red
+
+            continue
+        }
+    }
+    else {
+
+        Write-Host "Users OU already exists" -ForegroundColor Yellow
     }
 
 
@@ -148,15 +241,34 @@ foreach ($dept in $departments) {
 
     $computersOU = "OU=Computers,$deptOU"
 
-    if (-not (Get-ADOrganizationalUnit `
-        -Identity $computersOU `
-        -ErrorAction SilentlyContinue)) {
 
-        New-ADOrganizationalUnit `
-            -Name "Computers" `
-            -Path $deptOU
+    $computersExists = Get-ADOrganizationalUnit `
+        -Filter "DistinguishedName -eq '$computersOU'" `
+        -ErrorAction SilentlyContinue
 
-        Write-Host "Created Computers OU in $dept" -ForegroundColor Cyan
+
+    if (-not $computersExists) {
+
+        try {
+
+            New-ADOrganizationalUnit `
+                -Name "Computers" `
+                -Path $deptOU `
+                -ErrorAction Stop
+
+            Write-Host "Created Computers OU" -ForegroundColor Green
+        }
+        catch {
+
+            Write-Host "ERROR creating Computers OU for $dept" -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor Red
+
+            continue
+        }
+    }
+    else {
+
+        Write-Host "Computers OU already exists" -ForegroundColor Yellow
     }
 
 
@@ -166,115 +278,167 @@ foreach ($dept in $departments) {
 
     $groupsOU = "OU=Groups,$deptOU"
 
-    if (-not (Get-ADOrganizationalUnit `
-        -Identity $groupsOU `
-        -ErrorAction SilentlyContinue)) {
 
-        New-ADOrganizationalUnit `
-            -Name "Groups" `
-            -Path $deptOU
-
-        Write-Host "Created Groups OU in $dept" -ForegroundColor Cyan
-    }
-
-
-    # --------------------------------------------------------
-    # Department Security Group
-    # --------------------------------------------------------
-
-    $deptGroupName = "$dept Group"
-
-    $existingGroup = Get-ADGroup `
-        -Filter "Name -eq '$deptGroupName'" `
-        -SearchBase $groupsOU `
+    $groupsExists = Get-ADOrganizationalUnit `
+        -Filter "DistinguishedName -eq '$groupsOU'" `
         -ErrorAction SilentlyContinue
 
-    if (-not $existingGroup) {
 
-        New-ADGroup `
-            -Name $deptGroupName `
-            -SamAccountName "$dept-Group" `
-            -GroupScope Global `
-            -GroupCategory Security `
-            -Path $groupsOU
+    if (-not $groupsExists) {
 
-        Write-Host "Created group: $deptGroupName" -ForegroundColor Green
+        try {
+
+            New-ADOrganizationalUnit `
+                -Name "Groups" `
+                -Path $deptOU `
+                -ErrorAction Stop
+
+            Write-Host "Created Groups OU" -ForegroundColor Green
+        }
+        catch {
+
+            Write-Host "ERROR creating Groups OU for $dept" -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor Red
+
+            continue
+        }
     }
     else {
 
-        Write-Host "Group already exists: $deptGroupName" -ForegroundColor Yellow
+        Write-Host "Groups OU already exists" -ForegroundColor Yellow
+    }
+
+
+    # --------------------------------------------------------
+    # CREATE DEPARTMENT GROUP
+    # --------------------------------------------------------
+
+    $groupName = "$dept Group"
+
+    $groupDN = "CN=$groupName,$groupsOU"
+
+
+    $existingGroup = Get-ADGroup `
+        -Identity $groupDN `
+        -ErrorAction SilentlyContinue
+
+
+    if (-not $existingGroup) {
+
+        try {
+
+            New-ADGroup `
+                -Name $groupName `
+                -SamAccountName "$dept-Group" `
+                -GroupScope Global `
+                -GroupCategory Security `
+                -Path $groupsOU `
+                -ErrorAction Stop
+
+            Write-Host "Created group: $groupName" -ForegroundColor Green
+        }
+        catch {
+
+            Write-Host "ERROR creating group: $groupName" -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor Red
+        }
+    }
+    else {
+
+        Write-Host "Group already exists: $groupName" -ForegroundColor Yellow
     }
 }
 
 
 # ============================================================
-# CREATE USERS FROM CSV
+# PASSWORD
+# ============================================================
+
+$password = ConvertTo-SecureString `
+    $defaultPassword `
+    -AsPlainText `
+    -Force
+
+
+# ============================================================
+# USER DEPLOYMENT
 # ============================================================
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Starting user deployment..." -ForegroundColor Cyan
+Write-Host "STARTING USER DEPLOYMENT" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
 
 foreach ($user in $userList) {
 
+
     # --------------------------------------------------------
-    # CSV VALUES
+    # READ CSV
     # --------------------------------------------------------
 
     $GivenName  = $user.FirstName.Trim()
     $LastName   = $user.LastName.Trim()
     $sam        = $user.Username.Trim()
     $department = $user.Department.Trim()
-    $groupName  = $user.Group.Trim()
     $ouName     = $user.OU.Trim()
 
 
     # --------------------------------------------------------
-    # Validate department
+    # CHECK REQUIRED DATA
+    # --------------------------------------------------------
+
+    if (
+        [string]::IsNullOrWhiteSpace($GivenName) -or
+        [string]::IsNullOrWhiteSpace($LastName) -or
+        [string]::IsNullOrWhiteSpace($sam) -or
+        [string]::IsNullOrWhiteSpace($department) -or
+        [string]::IsNullOrWhiteSpace($ouName)
+    ) {
+
+        Write-Warning "Skipping row because required information is missing."
+
+        continue
+    }
+
+
+    # --------------------------------------------------------
+    # CHECK DEPARTMENT
     # --------------------------------------------------------
 
     if ($department -notin $departments) {
 
         Write-Warning `
-            "Invalid department '$department' for user $sam"
+            "Invalid department '$department' for $sam"
 
         continue
     }
 
 
     # --------------------------------------------------------
-    # Validate OU
+    # CHECK OU
     # --------------------------------------------------------
 
     if ($ouName -notin $departments) {
 
         Write-Warning `
-            "Invalid OU '$ouName' for user $sam"
+            "Invalid OU '$ouName' for $sam"
 
         continue
     }
 
 
     # --------------------------------------------------------
-    # Full name
+    # USER DETAILS
     # --------------------------------------------------------
 
-    $FullName = "$GivenName $LastName"
-
-
-    # --------------------------------------------------------
-    # UPN
-    # --------------------------------------------------------
+    $fullName = "$GivenName $LastName"
 
     $upn = "$sam@abc.local"
 
 
     # --------------------------------------------------------
-    # User destination OU
-    #
-    # OU=Users,OU=Sales,OU=Employee,DC=abc,DC=local
+    # USER OU
     # --------------------------------------------------------
 
     $usersOU = `
@@ -282,16 +446,27 @@ foreach ($user in $userList) {
 
 
     # --------------------------------------------------------
-    # Groups destination OU
+    # GROUP
+    #
+    # Example:
+    #
+    # Department = Sales
+    #
+    # Group = Sales Group
     # --------------------------------------------------------
+
+    $groupName = "$department Group"
 
     $groupsOU = `
-        "OU=Groups,OU=$ouName,$employeeOU"
+        "OU=Groups,OU=$department,$employeeOU"
+
+    $groupDN = `
+        "CN=$groupName,$groupsOU"
 
 
-    # --------------------------------------------------------
-    # Check if user already exists
-    # --------------------------------------------------------
+    # ========================================================
+    # CHECK USER
+    # ========================================================
 
     $existingUser = Get-ADUser `
         -Filter "SamAccountName -eq '$sam'" `
@@ -307,7 +482,7 @@ foreach ($user in $userList) {
         try {
 
             New-ADUser `
-                -Name $FullName `
+                -Name $fullName `
                 -GivenName $GivenName `
                 -Surname $LastName `
                 -SamAccountName $sam `
@@ -319,10 +494,13 @@ foreach ($user in $userList) {
                 -ChangePasswordAtLogon $true `
                 -ErrorAction Stop
 
-            Write-Host `
-                "Created: $sam -> $usersOU" `
-                -ForegroundColor Green
 
+            Write-Host ""
+            Write-Host "USER CREATED" -ForegroundColor Green
+            Write-Host "Name: $fullName" -ForegroundColor Green
+            Write-Host "Username: $sam" -ForegroundColor Green
+            Write-Host "Department: $department" -ForegroundColor Green
+            Write-Host "OU: $usersOU" -ForegroundColor Green
         }
         catch {
 
@@ -331,13 +509,11 @@ foreach ($user in $userList) {
 
             continue
         }
-
     }
     else {
 
-        Write-Host `
-            "User already exists: $sam" `
-            -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "User already exists: $sam" -ForegroundColor Yellow
     }
 
 
@@ -346,63 +522,124 @@ foreach ($user in $userList) {
     # ========================================================
 
     $group = Get-ADGroup `
-        -Filter "Name -eq '$groupName'" `
-        -SearchBase $groupsOU `
+        -Identity $groupDN `
         -ErrorAction SilentlyContinue
 
 
-    if ($group) {
+    if (-not $group) {
+
+        Write-Warning `
+            "Department group not found: $groupDN"
+
+        continue
+    }
+
+
+    # --------------------------------------------------------
+    # CHECK GROUP MEMBERSHIP
+    # --------------------------------------------------------
+
+    $alreadyMember = Get-ADGroupMember `
+        -Identity $groupDN `
+        -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.SamAccountName -eq $sam
+        }
+
+
+    # --------------------------------------------------------
+    # ADD USER TO GROUP
+    # --------------------------------------------------------
+
+    if (-not $alreadyMember) {
 
         try {
 
             Add-ADGroupMember `
-                -Identity $group `
+                -Identity $groupDN `
                 -Members $sam `
                 -ErrorAction Stop
 
-            Write-Host `
-                "Added $sam -> $groupName" `
-                -ForegroundColor Green
 
+            Write-Host `
+                "ADDED TO GROUP: $sam -> $groupName" `
+                -ForegroundColor Green
         }
         catch {
 
-            # Check if already a member
-            $isMember = Get-ADGroupMember `
-                -Identity $group `
-                -Recursive `
-                -ErrorAction SilentlyContinue |
-                Where-Object {
-                    $_.SamAccountName -eq $sam
-                }
-
-            if ($isMember) {
-
-                Write-Host `
-                    "$sam is already a member of $groupName" `
-                    -ForegroundColor Yellow
-            }
-            else {
-
-                Write-Warning `
-                    "Could not add $sam to $groupName : $($_.Exception.Message)"
-            }
+            Write-Warning `
+                "Failed to add $sam to $groupName : $($_.Exception.Message)"
         }
-
     }
     else {
 
-        Write-Warning `
-            "Group '$groupName' not found in $groupsOU"
+        Write-Host `
+            "Already member: $sam -> $groupName" `
+            -ForegroundColor Yellow
     }
 }
 
 
 # ============================================================
-# FINISHED
+# VERIFY GROUP MEMBERS
 # ============================================================
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "User deployment completed." -ForegroundColor Cyan
+Write-Host "VERIFYING GROUP MEMBERS" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+
+
+foreach ($dept in $departments) {
+
+    $groupName = "$dept Group"
+
+    Write-Host ""
+    Write-Host "----- $groupName -----" -ForegroundColor Magenta
+
+
+    $group = Get-ADGroup `
+        -Filter "Name -eq '$groupName'" `
+        -ErrorAction SilentlyContinue
+
+
+    if ($group) {
+
+        $members = Get-ADGroupMember `
+            -Identity $group `
+            -ErrorAction SilentlyContinue
+
+
+        if ($members) {
+
+            foreach ($member in $members) {
+
+                Write-Host `
+                    "$($member.Name) [$($member.SamAccountName)]" `
+                    -ForegroundColor Green
+            }
+
+            Write-Host ""
+            Write-Host "Total members: $($members.Count)" `
+                -ForegroundColor Cyan
+        }
+        else {
+
+            Write-Host "NO MEMBERS" -ForegroundColor Red
+        }
+    }
+    else {
+
+        Write-Host "GROUP NOT FOUND" -ForegroundColor Red
+    }
+}
+
+
+# ============================================================
+# COMPLETE
+# ============================================================
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "DEPLOYMENT COMPLETE" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
