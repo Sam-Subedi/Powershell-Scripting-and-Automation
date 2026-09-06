@@ -26,6 +26,8 @@ Get-Service | Where-Object Status -eq 'Running' | Set-Clipboard
 
 # Get-ADUser -Filter * | Select-Object Name, Enabled, LastLogonDate
 
+# net user Administrator ; net localgroup Administrators
+
 # (Get-Process -Name explorer).Path
  
 # Add-VMNetworkAdapterExtendedAcl
