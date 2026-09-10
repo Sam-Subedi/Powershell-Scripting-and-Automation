@@ -112,4 +112,5 @@ Network & Service Persistence Hunting:
 Get-CimInstance Win32_Service: Provides a list of all Windows services and their executable paths to scan for rogue background services installed by attackers.
 Get-CimInstance -Namespace root\StandardCimv2 -ClassName MSFT_DNSClientCache: Provides the local DNS cache to reveal exactly what domains or malicious servers the PC has recently tried to contact.
 
-
+# Get the last 10 WMI errors (Event ID 5858):
+Get-WinEvent -LogName "Microsoft-Windows-WMI-Activity/Operational" | Where-Object {$_.Id -eq 5858} | Select-Object -First 10 | Format-List
