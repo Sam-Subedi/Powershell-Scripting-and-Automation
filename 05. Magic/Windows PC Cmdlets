@@ -1,0 +1,65 @@
+Windows Commands:
+net user: To see local users
+net user username:to see details about a specific user
+net localgroup: check the local groups on a Windows machine
+net localgroup Administrators: To see the members of a local Administrators group
+
+Powershell Cmdlets:
+Get-LocalUser : To see local users
+Get-LocalUser -Name "username" : To see details about a specific user
+Get-LocalGroup : To check the local groups on a Windows machine
+Get-LocalGroupMember Administrators: To see the members of the local Administrators group
+Get-LocalGroupMember -Group "Administrators" : To see the members of the local Administrators group
+Get-LocalGroup -Name "Administrators" : To see details about the local Administrators group
+Get-LocalGroupMember -Group "Users" : To see the members of the local Users group
+Get-ComputerInfo : To see detailed information about the Windows machine
+Get-Service : To list Windows services
+Get-Process : To list running processes
+Get-NetIPConfiguration : To see network/IP configuration (ipconfig)
+Get-NetIPAddress : To see IP addresses configured on the machine
+Get-NetTCPConnection : To see active TCP connections (netstat -ano)
+Get-WindowsOptionalFeature -Online : To see Windows optional features
+Get-HotFix : To see installed Windows updates/hotfixes
+$env:COMPUTERNAME : Hostname
+
+View all available information about local users:
+Get-LocalUser | Format-List *  or, Get-LocalUser | Format-Table * or, Get-LocalUser | Out-GridView  
+
+Get detailed information about all local users: 
+Get-LocalUser | Select-Object Name, Enabled, Description, LastLogon, PasswordRequired, PasswordExpires, UserMayChangePassword
+
+Get detailed information about members of the local Administrators group: 
+Get-LocalGroupMember Administrators | Format-Table Or, Get-LocalGroupMember Administrators | Out-GridView
+
+To check who is in the Administrators group and whether the local accounts are enabled:
+Get-LocalGroupMember Administrators |
+    ForEach-Object {
+        $name = $_.Name
+
+        try {
+            $user = Get-LocalUser -Name ($name -split '\\')[-1] -ErrorAction Stop
+
+            [PSCustomObject]@{
+                Name        = $user.Name
+                Enabled     = $user.Enabled
+                LastLogon   = $user.LastLogon
+                Description = $user.Description
+                Principal   = $_.Name
+                ObjectClass = $_.ObjectClass
+            }
+        }
+        catch {
+            [PSCustomObject]@{
+                Name        = $name
+                Enabled     = "N/A"
+                LastLogon   = "N/A"
+                Description = "Domain/other account"
+                Principal   = $_.Name
+                ObjectClass = $_.ObjectClass
+            }
+        }
+    } |
+    Format-Table -AutoSize
+
+
+
