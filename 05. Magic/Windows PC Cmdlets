@@ -30,6 +30,9 @@ Get-LocalUser | Format-List *  or, Get-LocalUser | Format-Table * or, Get-LocalU
 Get detailed information about all local users: 
 Get-LocalUser | Select-Object Name, Enabled, Description, LastLogon, PasswordRequired, PasswordExpires, UserMayChangePassword
 
+Get detailed information about specefic user: 
+Get-LocalUser -Name "Username" | Select-Object Name, Enabled, Description, LastLogon, PasswordRequired, PasswordExpires, UserMayChangePassword
+
 Get detailed information about members of the local Administrators group: 
 Get-LocalGroupMember Administrators | Format-Table Or, Get-LocalGroupMember Administrators | Out-GridView
 
