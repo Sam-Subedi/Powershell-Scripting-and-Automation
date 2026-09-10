@@ -38,6 +38,7 @@ Get-Service | Where-Object Status -eq 'Running' | Set-Clipboard
 
 
 Powershell Tricks:
+# | Format-Table -AutoSize
 
 # |Out-GridView
 
