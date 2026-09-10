@@ -67,4 +67,49 @@ Get-LocalGroupMember Administrators |
     Format-Table -AutoSize
 
 
+Get-CimInstance Cmdlets: 
+Get-CimInstance Win32_Bios: Provides BIOS version, serial number, and manufacturer details.
+Get-CimInstance Win32_Processor: Provides CPU model, core count, clock speed, and status.
+Get-CimInstance Win32_PhysicalMemory: Provides RAM stick sizes, speeds, and manufacturer details.
+Get-CimInstance Win32_NetworkAdapterConfiguration: Provides IP addresses, MAC addresses, and network settings.
+Get-CimInstance Win32_BaseBoard: Provides motherboard model, manufacturer, and serial number.
+Get-CimInstance Win32_VideoController: Provides graphics card (GPU) model and driver information.
+Get-CimInstance Win32_StartupCommand: Provides a list of programs that automatically run when Windows boots up.
+Get-CimInstance Win32_QuickFixEngineering: Provides a list of installed Windows Updates and patches.
+
+Discovery & Forensic Gathering:
+Get-CimInstance Win32_LocalUserAccount: Provides a list of all local user accounts to check for newly hidden or unauthorized accounts created by hackers.
+Get-CimInstance Win32_GroupUser: Provides local group memberships, allowing analysts to see who has been added to high-privilege groups like "Administrators".
+Get-CimInstance Win32_NetworkConnection: Provides active network connections to reveal if the computer is quietly communicating with a hacker's rogue server.
+Get-CimInstance Win32_Product: Provides a list of all installed software to scan for hidden malicious programs or dual-use hacking tools.
+Get-CimInstance Win32_Share: Provides a list of active network shares to check if hackers are exposing folders to steal data across the office network.
+
+Hunting for Malware Persistence & Abuse:
+Get-CimInstance -Namespace root\subscription -ClassName __EventConsumer: Provides a list of active WMI Event Consumers. Threat hunters use this to find fileless malware or malicious scripts set to trigger every time the PC boots.
+Get-CimInstance Win32_ScheduledJob: Provides legacy scheduled tasks running on the system that may be hiding persistent malware.
+Get-CimInstance Win32_ShadowCopy: Provides details on Volume Shadow Copies. Ransomware groups frequently use WMI to delete these copies so you can't recover your files. Defenders check this class to see if backups were recently wiped. 
+
+Checking for Backdoor Accounts & Privilege Escalation:
+Get-CimInstance Win32_LocalUserAccount -Filter "Disabled = 'False'": Provides only the active local accounts, helping you spot hidden profiles a hacker enabled.
+Get-CimInstance Win32_LocalUserAccount -Filter "PasswordRequired = 'False'": Provides a list of accounts that don't need a password to log in—a massive security risk.
+
+Spotting Malicious Processes & Persistence:
+Get-CimInstance Win32_Process -Filter "Name = 'cmd.exe' OR Name = 'powershell.exe'": Provides details on any running command line or PowerShell windows, which are often used to execute hacker scripts.
+Get-CimInstance Win32_Process -Filter "ExecutablePath LIKE '%AppData%'": Provides processes running straight out of a user's temporary folders. Legitimate software rarely runs from here, making it a common malware hiding spot.
+
+Checking Network & Software Anomalies:
+Get-CimInstance Win32_Product -Filter "Name LIKE '%VNC%' OR Name LIKE '%AnyDesk%'": Provides a check for unauthorized remote access tools that threat actors install to maintain control.
+Get-CimInstance Win32_LogicalDisk -Filter "DriveType = 4": Provides a list of connected network drives to see where a hacker might be trying to move laterally or exfiltrate data.
+
+Hunt (AppData Process Execution & Lineage Trace):
+A.Scan for processes running out of AppData:
+Get-CimInstance Win32_Process -Filter "ExecutablePath LIKE '%AppData%'" | Select-Object Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine
+
+B.Identify the parent application that spawned the suspicious process:
+Get-Process -Id (Parent Process ID Number) Example: Get-Process -Id 4812
+
+Network & Service Persistence Hunting:
+Get-CimInstance Win32_Service: Provides a list of all Windows services and their executable paths to scan for rogue background services installed by attackers.
+Get-CimInstance -Namespace root\StandardCimv2 -ClassName MSFT_DNSClientCache: Provides the local DNS cache to reveal exactly what domains or malicious servers the PC has recently tried to contact.
+
 
