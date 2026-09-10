@@ -1,8 +1,10 @@
 Windows Commands:
 net user: To see local users
-net user username:to see details about a specific user
-net localgroup: check the local groups on a Windows machine
+net user username:To see detailed information about a specific user account (Example: net user sam or, net user Administrator)
+net user Administrator: To see detailed information about the built-in Administrator account
+net localgroup: Check the local groups on a Windows machine
 net localgroup Administrators: To see the members of a local Administrators group
+
 
 Powershell Cmdlets:
 Get-LocalUser : To see local users
