@@ -20,11 +20,20 @@ Get-ChildItem *.* | Select-Object Name, @{Name="Size(MB)"; Expression={ [math]::
 # Send Output Straight to Clipboard, Never copy text manually from the shell host
 Get-Service | Where-Object Status -eq 'Running' | Set-Clipboard
 
+#Get-service
+
 # Test-NetConnection -ComputerName google.com -InformationLevel Detailed
 
 # Get-NetIPConfiguration -Detailed or, Get-NetIPConfiguration -All
 
+# Get-NetTCPConnection
+
+# Get-NetTCPConnection |
+    Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort, State, OwningProcess
+
 # Get-ADUser -Filter * | Select-Object Name, Enabled, LastLogonDate
+
+# Get-process
 
 # (Get-Process -Name explorer).Path
 
