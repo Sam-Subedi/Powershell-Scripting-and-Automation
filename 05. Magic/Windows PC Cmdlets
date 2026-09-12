@@ -80,23 +80,25 @@ Get-CimInstance Win32_QuickFixEngineering: Provides a list of installed Windows 
 
 Discovery & Forensic Gathering:
 Get-CimInstance Win32_UserAccount: Provides information about user accounts, including local and domain accounts. Useful for identifying unexpected, disabled, or potentially unauthorized accounts.
-Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True": 
-Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND Disabled = False": 
-Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND PasswordRequired = False": 
-Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True" |Select-Object Name, Domain, Disabled, Lockout, PasswordRequired, SID: 
-Get-CimInstance Win32_GroupUser: Provides local group memberships, allowing analysts to see who has been added to high-privilege groups like "Administrators".
-Get-CimInstance Win32_NetworkConnection: Provides active network connections to reveal if the computer is quietly communicating with a hacker's rogue server.
-Get-CimInstance Win32_Product: Provides a list of all installed software to scan for hidden malicious programs or dual-use hacking tools.
-Get-CimInstance Win32_Share: Provides a list of active network shares to check if hackers are exposing folders to steal data across the office network.
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True": Provides information about local user accounts only.
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND Disabled = False": Provides enabled local user accounts, useful for reviewing accounts that are currently active.
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND PasswordRequired = False": Identifies local accounts that do not require a password.
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True"|Select-Object Name, Domain, Disabled, Lockout, PasswordRequired, SID: Displays key properties of local accounts, including account name, domain, disabled/lockout status, password requirements, and SID.
+Get-CimInstance Win32_GroupUser: Provides an association between user accounts and groups, allowing analysts to investigate group membership and identify accounts belonging to privileged groups such as Administrators.
+Get-CimInstance Win32_NetworkConnection: Provides information about network resource connections, such as connections to remote shares.
+Get-CimInstance Win32_Product: Provides information about MSI installed software registered in common Windows uninstall registry locations, useful for software inventory and identifying unexpected applications.
+Get-CimInstance Win32_Share: Provides information about locally configured shared resources, useful for identifying unexpected or overly permissive network shares.
 
 Hunting for Malware Persistence & Abuse:
-Get-CimInstance -Namespace root\subscription -ClassName __EventConsumer: Provides a list of active WMI Event Consumers. Threat hunters use this to find fileless malware or malicious scripts set to trigger every time the PC boots.
-Get-CimInstance Win32_ScheduledJob: Provides legacy scheduled tasks running on the system that may be hiding persistent malware.
-Get-CimInstance Win32_ShadowCopy: Provides details on Volume Shadow Copies. Ransomware groups frequently use WMI to delete these copies so you can't recover your files. Defenders check this class to see if backups were recently wiped. 
+Get-CimInstance -Namespace root\subscription -ClassName __EventConsumer: Provides information about WMI event consumers, which can be investigated for persistence mechanisms involving scripts or other actions triggered by WMI events.
+Get-CimInstance Win32_ScheduledJob: Provides information about legacy WMI scheduled jobs, which can be reviewed for potential persistence or scheduled activity.
+Get-CimInstance Win32_ShadowCopy: Provides information about Volume Shadow Copies, useful for investigating backup/recovery configuration and determining whether shadow copies are present.
 
 Checking for Backdoor Accounts & Privilege Escalation:
-Get-CimInstance Win32_LocalUserAccount -Filter "Disabled = 'False'": Provides only the active local accounts, helping you spot hidden profiles a hacker enabled.
-Get-CimInstance Win32_LocalUserAccount -Filter "PasswordRequired = 'False'": Provides a list of accounts that don't need a password to log in—a massive security risk.
+Get-CimInstance Win32_UserAccount -Filter "Disabled = 'False'": Identifies local accounts thta are disabled.
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND Disabled = False": Provides enabled local user accounts, useful for reviewing accounts that are currently active.
+Get-CimInstance Win32_UserAccount -Filter "PasswordRequired = 'False'": Identifies local accounts that do not require a password.
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND PasswordRequired = False": Identifies local accounts that do not require a password.
 
 Spotting Malicious Processes & Persistence:
 Get-CimInstance Win32_Process -Filter "Name = 'cmd.exe' OR Name = 'powershell.exe'": Provides details on any running command line or PowerShell windows, which are often used to execute hacker scripts.
@@ -107,7 +109,7 @@ Checking Network & Software Anomalies:
 Get-CimInstance Win32_Product -Filter "Name LIKE '%VNC%' OR Name LIKE '%AnyDesk%'": Provides a check for unauthorized remote access tools that threat actors install to maintain control.
 Get-CimInstance Win32_LogicalDisk -Filter "DriveType = 4": Provides a list of connected network drives to see where a hacker might be trying to move laterally or exfiltrate data.
 Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" , "HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" |
-Select-Object DisplayName, DisplayVersion, Publisher, InstallDate: 
+Select-Object DisplayName, DisplayVersion, Publisher, InstallDate: Enumerates software registered in common Windows uninstall registry locations.
 
 Hunt (AppData Process Execution & Lineage Trace):
 A.Scan for processes running out of AppData:
