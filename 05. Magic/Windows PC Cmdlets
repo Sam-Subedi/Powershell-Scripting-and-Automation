@@ -81,7 +81,7 @@ Get-CimInstance Win32_QuickFixEngineering: Provides a list of installed Windows 
 Discovery & Forensic Gathering:
 Get-CimInstance Win32_UserAccount: Provides a list of all local user accounts to check for newly hidden or unauthorized accounts created by hackers.
 Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True": 
-Win32_UserAccount -Filter "LocalAccount = True AND Disabled = False": Wrong
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND Disabled = False": 
 Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND PasswordRequired = False": 
 Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True" |Select-Object Name, Domain, Disabled, Lockout, PasswordRequired, SID: 
 Get-CimInstance Win32_GroupUser: Provides local group memberships, allowing analysts to see who has been added to high-privilege groups like "Administrators".
