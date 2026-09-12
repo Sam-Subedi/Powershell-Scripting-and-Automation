@@ -95,10 +95,10 @@ Get-CimInstance Win32_ScheduledJob: Provides information about legacy WMI schedu
 Get-CimInstance Win32_ShadowCopy: Provides information about Volume Shadow Copies, useful for investigating backup/recovery configuration and determining whether shadow copies are present.
 
 Checking for Backdoor Accounts & Privilege Escalation:
-Get-CimInstance Win32_UserAccount -Filter "Disabled = 'False'": Identifies local accounts thta are disabled.
-Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND Disabled = False": Provides enabled local user accounts, useful for reviewing accounts that are currently active.
-Get-CimInstance Win32_UserAccount -Filter "PasswordRequired = 'False'": Identifies local accounts that do not require a password.
-Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND PasswordRequired = False": Identifies local accounts that do not require a password.
+Get-CimInstance Win32_UserAccount -Filter "Disabled = 'False'": Identifies user accounts that are enabled.
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND Disabled = False": Identifies enabled local user accounts, useful for reviewing accounts that are currently active.
+Get-CimInstance Win32_UserAccount -Filter "PasswordRequired = 'False'": Identifies user accounts that do not require a password.
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND PasswordRequired = False": Identifies local user accounts that do not require a password.
 
 Spotting Malicious Processes & Persistence:
 Get-CimInstance Win32_Process -Filter "Name = 'cmd.exe' OR Name = 'powershell.exe'": Provides details on any running command line or PowerShell windows, which are often used to execute hacker scripts.
