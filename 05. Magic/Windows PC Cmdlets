@@ -75,11 +75,11 @@ Get-CimInstance Win32_PhysicalMemory: Provides RAM stick sizes, speeds, and manu
 Get-CimInstance Win32_NetworkAdapterConfiguration: Provides IP addresses, MAC addresses, and network settings.
 Get-CimInstance Win32_BaseBoard: Provides motherboard model, manufacturer, and serial number.
 Get-CimInstance Win32_VideoController: Provides graphics card (GPU) model and driver information.
-Get-CimInstance Win32_StartupCommand: Provides a list of programs that automatically run when Windows boots up.
+Get-CimInstance Win32_StartupCommand: Provides startup commands configured to run automatically when a user logs on or Windows starts.
 Get-CimInstance Win32_QuickFixEngineering: Provides a list of installed Windows Updates and patches.
 
 Discovery & Forensic Gathering:
-Get-CimInstance Win32_UserAccount: Provides a list of all local user accounts to check for newly hidden or unauthorized accounts created by hackers.
+Get-CimInstance Win32_UserAccount: Provides information about user accounts, including local and domain accounts. Useful for identifying unexpected, disabled, or potentially unauthorized accounts.
 Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True": 
 Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND Disabled = False": 
 Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND PasswordRequired = False": 
