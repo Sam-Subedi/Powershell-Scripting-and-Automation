@@ -94,7 +94,7 @@ Get-CimInstance -Namespace root\subscription -ClassName __EventConsumer: Provide
 Get-CimInstance Win32_ScheduledJob: Provides information about legacy WMI scheduled jobs, which can be reviewed for potential persistence or scheduled activity.
 Get-CimInstance Win32_ShadowCopy: Provides information about Volume Shadow Copies, useful for investigating backup/recovery configuration and determining whether shadow copies are present.
 
-Checking for Backdoor Accounts & Privilege Escalation:
+Checking for Suspicious Accounts & Privilege Configuration:
 Get-CimInstance Win32_UserAccount -Filter "Disabled = False": Identifies user accounts that are enabled.
 Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True": Identifies local user accounts on the computer.
 Get-CimInstance Win32_UserAccount -Filter "PasswordRequired = False": Identifies user accounts that do not require a password.
