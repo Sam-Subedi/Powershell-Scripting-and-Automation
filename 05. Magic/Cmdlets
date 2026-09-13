@@ -20,6 +20,18 @@ Get-ChildItem *.* | Select-Object Name, @{Name="Size(MB)"; Expression={ [math]::
 # Send Output Straight to Clipboard, Never copy text manually from the shell host
 Get-Service | Where-Object Status -eq 'Running' | Set-Clipboard
 
+# Enable PowerShell Remoting: Enable-PSRemoting -Force
+(Enables PowerShell remoting on the target Windows computer and configures the required WinRM components)
+
+# Check the WinRM service: Get-Service WinRM
+(Displays the status and configuration of the Windows Remote Management (WinRM) service)
+
+# Test WinRM connectivity: Test-WSMan SERVER01
+(Tests whether the target computer responds to WS-Management requests. Replace SERVER01 with the actual computer name or appropriate hostname.)
+
+# Start an interactive remote PowerShell session: Enter-PSSession -ComputerName SERVER01
+(Run this from the administrator workstation. It Starts an interactive PowerShell session on the specified remote computer)
+
 #Get-service
 
 # Test-NetConnection -ComputerName google.com -InformationLevel Detailed
