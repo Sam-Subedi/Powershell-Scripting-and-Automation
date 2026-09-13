@@ -116,17 +116,25 @@ Where-Object { $_.DisplayName -match 'VNC|AnyDesk' } | Select-Object DisplayName
 Hunt (AppData Process Execution & Lineage Trace):
 A.Scan for processes running out of AppData:
 Get-CimInstance Win32_Process -Filter "ExecutablePath LIKE '%AppData%'" | Select-Object Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine
+(Identifies processes whose executable path contains AppData and displays their process ID, parent process ID, executable path, and command line for investigation.)
 
 B.Identify the parent application that spawned the suspicious process:
 Get-Process -Id (Parent Process ID Number) Example: Get-Process -Id 4812
+(Retrieves information about the process associated with the specified parent process ID.)
 
 Network & Service Persistence Hunting:
-Get-CimInstance Win32_Service: Provides a list of all Windows services and their executable paths to scan for rogue background services installed by attackers.
-Get-CimInstance -Namespace root\StandardCimv2 -ClassName MSFT_DNSClientCache: Provides the local DNS cache to reveal exactly what domains or malicious servers the PC has recently tried to contact.
+Get-CimInstance Win32_Service: Provides information about Windows services, including their names, states, startup modes, and executable paths, useful for investigating suspicious or unexpected services.
+Get-CimInstance -Namespace root\StandardCimv2 -ClassName MSFT_DNSClientCache: Provides cached DNS resolution information, which can help identify recently resolved domain names and investigate potentially suspicious domains.
 
 # Get the last 10 WMI errors (Event ID 5858):
-Get-WinEvent -LogName "Microsoft-Windows-WMI-Activity/Operational" | Where-Object {$_.Id -eq 5858} | Select-Object -First 10 | Format-List
+Get-WinEvent -LogName "Microsoft-Windows-WMI-Activity/Operational" |
+    Where-Object {$_.Id -eq 5858} |
+    Select-Object -First 10 |
+    Format-List
+
+# Get the last 10 WMI errors (Event ID 5858):
 Get-WinEvent -FilterHashtable @{
-    LogName = 'Microsoft-Windows-WMI-Activity/Operational
+    LogName = 'Microsoft-Windows-WMI-Activity/Operational'
     Id      = 5858
 } -MaxEvents 10 | Format-List
+
