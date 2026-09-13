@@ -17,7 +17,7 @@ Get-LocalGroupMember -Group "Users" : To see the members of the local Users grou
 Get-ComputerInfo : To see detailed information about the Windows machine
 Get-Service : To list Windows services
 Get-Process : To list running processes
-Get-ScheduledTask:
+Get-ScheduledTask:Lists scheduled tasks configured on the Windows system.
 Get-NetIPConfiguration : To see network/IP configuration (ipconfig)
 Get-NetIPAddress : To see IP addresses configured on the machine
 Get-NetTCPConnection : To see active TCP connections (netstat -ano)
@@ -86,7 +86,7 @@ Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND PasswordRequi
 Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True"|Select-Object Name, Domain, Disabled, Lockout, PasswordRequired, SID: Displays key properties of local accounts, including account name, domain, disabled/lockout status, password requirements, and SID.
 Get-CimInstance Win32_GroupUser: Provides an association between user accounts and groups, allowing analysts to investigate group membership and identify accounts belonging to privileged groups such as Administrators.
 Get-CimInstance Win32_NetworkConnection: Provides information about network resource connections, such as connections to remote shares.
-Get-CimInstance Win32_Product: Provides information about MSI installed software registered in common Windows uninstall registry locations, useful for software inventory and identifying unexpected applications.
+Get-CimInstance Win32_Product: Provides information about software installed through Windows Installer (MSI), which can be used for software inventory and investigation of unexpected applications.
 Get-CimInstance Win32_Share: Provides information about locally configured shared resources, useful for identifying unexpected or overly permissive network shares.
 
 Hunting for Malware Persistence & Abuse:
