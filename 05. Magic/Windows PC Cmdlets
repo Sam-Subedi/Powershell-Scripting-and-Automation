@@ -114,11 +114,11 @@ Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" ,
 Where-Object { $_.DisplayName -match 'VNC|AnyDesk' } | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate: Searches registered installed software for names associated with VNC or AnyDesk, which can help identify installed remote-access software requiring further investigation. 
 
 Hunt (AppData Process Execution & Lineage Trace):
-A.Scan for processes running out of AppData:
+A.Scan for processes running from AppData:
 Get-CimInstance Win32_Process -Filter "ExecutablePath LIKE '%AppData%'" | Select-Object Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine
 (Identifies processes whose executable path contains AppData and displays their process ID, parent process ID, executable path, and command line for investigation.)
 
-B.Identify the parent application that spawned the suspicious process:
+B.Identify the parent process that spawned the suspicious process:
 Get-Process -Id (Parent Process ID Number) Example: Get-Process -Id 4812
 (Retrieves information about the process associated with the specified parent process ID.)
 
@@ -126,13 +126,13 @@ Network & Service Persistence Hunting:
 Get-CimInstance Win32_Service: Provides information about Windows services, including their names, states, startup modes, and executable paths, useful for investigating suspicious or unexpected services.
 Get-CimInstance -Namespace root\StandardCimv2 -ClassName MSFT_DNSClientCache: Provides cached DNS resolution information, which can help identify recently resolved domain names and investigate potentially suspicious domains.
 
-# Get the last 10 WMI errors (Event ID 5858):
+# Get recent WMI Event ID 5858 events:
 Get-WinEvent -LogName "Microsoft-Windows-WMI-Activity/Operational" |
     Where-Object {$_.Id -eq 5858} |
     Select-Object -First 10 |
     Format-List
 
-# Get the last 10 WMI errors (Event ID 5858):
+# Get recent WMI Event ID 5858 events:
 Get-WinEvent -FilterHashtable @{
     LogName = 'Microsoft-Windows-WMI-Activity/Operational'
     Id      = 5858
