@@ -1,13 +1,13 @@
 ﻿# Hyper-V Internal Switch NAT Setup Script
 
-# 0️⃣ Temporarily allow running scripts
+# 0️⃣Temporarily allow running scripts
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
-# 1️⃣ Variables
-$SwitchName      = "LAN Switch"          # EXACT name of your Internal switch
-$InternalSubnet = "192.168.2.0/24"            # VM subnet
-$GatewayIP      = "192.168.2.1"               # Host gateway IP
-$NatName        = "LANSwitchNAT"
+# 1️⃣Variables
+$SwitchName      = "Internal Switch"          # EXACT name of your Internal switch
+$InternalSubnet = "192.168.1.0/24"            # VM subnet
+$GatewayIP      = "192.168.1.1"               # Host gateway IP
+$NatName        = "Internal Switch NAT"
 
 $vAdapter = "vEthernet ($SwitchName)"
 
@@ -60,7 +60,7 @@ Write-Host "-----------------------------------"
 # 7️⃣ VM Configuration Reminder
 Write-Host "VM Configuration:"
 Write-Host "• Switch: $SwitchName"
-Write-Host "• IP: 192.168.2.2 – 192.168.2.254"
+Write-Host "• IP: 192.168.1.2 – 192.168.1.254"
 Write-Host "• Mask: 255.255.255.0"
 Write-Host "• Gateway: $GatewayIP"
 Write-Host "• DNS: 8.8.8.8 or $GatewayIP"
