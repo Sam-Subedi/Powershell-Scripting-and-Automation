@@ -50,6 +50,12 @@ Get-NetIPInterface | Where-Object {$_.InterfaceAlias -like "*Default Switch*"}
 
 Get-NetAdapter -IncludeHidden | Where-Object {$_.Name -like "*Local Area Connection*"} | Format-Table Name, Status, InterfaceDescription
 
+Get-VM | Get-VMNetworkAdapterExtendedAcl
+
+Get-VMNetworkAdapterExtendedAcl
+
+Get-VMNetworkAdapterExtendedAcl -VMName "VM Name"
+
 Quick Command:
 Get-VMNetworkAdapter -All | ForEach-Object {
     $vlan = Get-VMNetworkAdapterVlan -VMNetworkAdapter $_
