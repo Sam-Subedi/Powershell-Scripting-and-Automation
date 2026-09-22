@@ -1,0 +1,1258 @@
+POWERSHELL SYSTEM ADMINISTRATOR COMMAND REFERENCE
+Environment:
+Domain: abc.local
+Main OU: Employee
+Sub-OUs: Sales, IT, HR, Marketing
+Example DC: DC01.abc.local
+
+IMPORTANT:
+- Test administrative scripts in a lab before production deployment.
+- Use least privilege. Do not add accounts to privileged groups such as Domain Admins or Schema Admins unless the role genuinely requires it and your organization's change/approval process permits it.
+- Commands that change firewall, RDP, remoting, services, users, groups, registry, or permissions can affect production systems.
+- Run commands in an elevated PowerShell session when required.
+- The ActiveDirectory module is normally available on a DC or RSAT-installed admin workstation.
+
+======================================================================
+1. POWERSHELL / MODULE BASICS
+======================================================================
+
+Import Active Directory module:
+Import-Module ActiveDirectory
+
+Find available commands:
+Get-Command
+
+Find commands related to a topic:
+Get-Command *-Service
+Get-Command *-ADUser
+Get-Command *-Computer
+
+Get help:
+Get-Help Get-ADUser
+Get-Help Get-ADUser -Examples
+Get-Help Get-ADUser -Full
+
+Show PowerShell version:
+$PSVersionTable
+
+Show current user:
+whoami
+$env:USERNAME
+
+Show computer name:
+$env:COMPUTERNAME
+
+Show current location:
+Get-Location
+
+Change location:
+Set-Location C:\Scripts
+
+======================================================================
+2. ACTIVE DIRECTORY - USERS
+======================================================================
+
+Find a user:
+Get-ADUser -Identity sam.smith
+
+Detailed user information:
+Get-ADUser sam.smith -Properties *
+
+List all users:
+Get-ADUser -Filter *
+
+List enabled users:
+Get-ADUser -Filter 'Enabled -eq $true'
+
+List disabled users:
+Get-ADUser -Filter 'Enabled -eq $false'
+
+Find users by department:
+Get-ADUser -Filter 'Department -eq "Sales"'
+
+Find users in Sales OU:
+Get-ADUser -SearchBase "OU=Sales,OU=Employee,DC=abc,DC=local" -Filter *
+
+Find users in IT OU:
+Get-ADUser -SearchBase "OU=IT,OU=Employee,DC=abc,DC=local" -Filter *
+
+Find users in HR OU:
+Get-ADUser -SearchBase "OU=HR,OU=Employee,DC=abc,DC=local" -Filter *
+
+Find users in Marketing OU:
+Get-ADUser -SearchBase "OU=Marketing,OU=Employee,DC=abc,DC=local" -Filter *
+
+Create a user directly in Sales OU:
+New-ADUser -Name "Sam Smith" `
+    -GivenName "Sam" `
+    -Surname "Smith" `
+    -SamAccountName "sam.smith" `
+    -UserPrincipalName "sam.smith@abc.local" `
+    -Path "OU=Sales,OU=Employee,DC=abc,DC=local" `
+    -AccountPassword (Read-Host "Temporary password" -AsSecureString) `
+    -Enabled $true `
+    -ChangePasswordAtLogon $true
+
+Create user in IT:
+New-ADUser -Name "Sam Smith" -GivenName "Sam" -Surname "Smith" `
+    -SamAccountName "sam.smith" -UserPrincipalName "sam.smith@abc.local" `
+    -Path "OU=IT,OU=Employee,DC=abc,DC=local" `
+    -AccountPassword (Read-Host "Temporary password" -AsSecureString) `
+    -Enabled $true -ChangePasswordAtLogon $true
+
+Modify department:
+Set-ADUser sam.smith -Department "Sales"
+
+Modify title:
+Set-ADUser sam.smith -Title "Sales Representative"
+
+Modify phone:
+Set-ADUser sam.smith -OfficePhone "0400000000"
+
+Disable account:
+Disable-ADAccount -Identity sam.smith
+
+Enable account:
+Enable-ADAccount -Identity sam.smith
+
+Unlock account:
+Unlock-ADAccount -Identity sam.smith
+
+Reset password:
+Set-ADAccountPassword -Identity sam.smith -Reset `
+    -NewPassword (Read-Host "New password" -AsSecureString)
+
+Force password change at next logon:
+Set-ADUser sam.smith -ChangePasswordAtLogon $true
+
+Move user from Sales to IT:
+Move-ADObject `
+    -Identity "CN=Sam Smith,OU=Sales,OU=Employee,DC=abc,DC=local" `
+    -TargetPath "OU=IT,OU=Employee,DC=abc,DC=local"
+
+Delete user:
+Remove-ADUser -Identity sam.smith
+
+======================================================================
+3. ACTIVE DIRECTORY - GROUPS
+======================================================================
+
+List groups:
+Get-ADGroup -Filter *
+
+Find a specific group:
+Get-ADGroup -Identity "Sales-Users"
+
+Create a security group:
+New-ADGroup -Name "Sales-Users" `
+    -GroupScope Global `
+    -GroupCategory Security `
+    -Path "OU=Sales,OU=Employee,DC=abc,DC=local"
+
+Add user to group:
+Add-ADGroupMember -Identity "Sales-Users" -Members sam.smith
+
+Remove user from group:
+Remove-ADGroupMember -Identity "Sales-Users" -Members sam.smith
+
+List group members:
+Get-ADGroupMember -Identity "Sales-Users"
+
+Find all groups for a user:
+Get-ADPrincipalGroupMembership -Identity sam.smith
+
+Check whether a user belongs to a specific group:
+Get-ADGroupMember "Sales-Users" | Where-Object SamAccountName -eq "sam.smith"
+
+Add multiple users:
+Add-ADGroupMember -Identity "Sales-Users" -Members user1,user2,user3
+
+======================================================================
+4. BUILT-IN / PRIVILEGED AD GROUPS
+======================================================================
+
+IMPORTANT:
+Domain Admins, Enterprise Admins, Schema Admins, Account Operators, Server
+Operators and other privileged groups provide significant permissions.
+Use only approved administrative accounts and follow least privilege.
+
+List Domain Admins:
+Get-ADGroupMember "Domain Admins"
+
+List Enterprise Admins:
+Get-ADGroupMember "Enterprise Admins"
+
+List Schema Admins:
+Get-ADGroupMember "Schema Admins"
+
+Add a user to Domain Admins ONLY when explicitly authorized:
+Add-ADGroupMember -Identity "Domain Admins" -Members admin.user
+
+Add a user to Schema Admins ONLY when explicitly authorized:
+Add-ADGroupMember -Identity "Schema Admins" -Members admin.user
+
+Remove a user from Domain Admins:
+Remove-ADGroupMember -Identity "Domain Admins" -Members admin.user
+
+Remove a user from Schema Admins:
+Remove-ADGroupMember -Identity "Schema Admins" -Members admin.user
+
+Check privileged group membership:
+Get-ADPrincipalGroupMembership admin.user
+
+======================================================================
+5. ACTIVE DIRECTORY - OUs
+======================================================================
+
+List OUs:
+Get-ADOrganizationalUnit -Filter *
+
+Find Employee OU:
+Get-ADOrganizationalUnit -Identity "OU=Employee,DC=abc,DC=local"
+
+Create Finance under Employee:
+New-ADOrganizationalUnit -Name "Finance" `
+    -Path "OU=Employee,DC=abc,DC=local"
+
+Find computers in Sales:
+Get-ADComputer `
+    -SearchBase "OU=Sales,OU=Employee,DC=abc,DC=local" `
+    -Filter *
+
+Find users in Sales:
+Get-ADUser `
+    -SearchBase "OU=Sales,OU=Employee,DC=abc,DC=local" `
+    -Filter *
+
+======================================================================
+6. ACTIVE DIRECTORY - COMPUTERS
+======================================================================
+
+List all AD computers:
+Get-ADComputer -Filter *
+
+Find computer:
+Get-ADComputer -Identity PC01
+
+Detailed computer information:
+Get-ADComputer PC01 -Properties *
+
+Disable computer account:
+Disable-ADAccount -Identity PC01
+
+Enable computer account:
+Enable-ADAccount -Identity PC01
+
+Remove computer account:
+Remove-ADComputer -Identity PC01
+
+Move computer to Sales OU:
+Move-ADObject `
+    -Identity "CN=PC01,CN=Computers,DC=abc,DC=local" `
+    -TargetPath "OU=Sales,OU=Employee,DC=abc,DC=local"
+
+======================================================================
+7. DOMAIN JOIN / DOMAIN LEAVE / COMPUTER NAME
+======================================================================
+
+Check whether PC is domain joined:
+Get-CimInstance Win32_ComputerSystem |
+    Select-Object Name, Domain, PartOfDomain
+
+Join domain:
+Add-Computer -DomainName "abc.local" `
+    -Server "DC01.abc.local" `
+    -Credential (Get-Credential) `
+    -Restart
+
+Join domain and place computer into OU:
+Add-Computer -DomainName "abc.local" `
+    -Server "DC01.abc.local" `
+    -OUPath "OU=Sales,OU=Employee,DC=abc,DC=local" `
+    -Credential (Get-Credential) `
+    -Restart
+
+Rename computer:
+Rename-Computer -NewName "SALES-PC01" -Restart
+
+Rename remotely:
+Rename-Computer -ComputerName "PC01" -NewName "SALES-PC01" `
+    -DomainCredential (Get-Credential) -Restart
+
+Remove computer from domain:
+Remove-Computer -UnjoinDomainCredential (Get-Credential) -Restart
+
+======================================================================
+8. LOCAL USER MANAGEMENT
+======================================================================
+
+List local users:
+Get-LocalUser
+
+Create local user:
+New-LocalUser -Name "localadmin" `
+    -Password (Read-Host "Password" -AsSecureString) `
+    -FullName "Local Administrator"
+
+Enable local user:
+Enable-LocalUser -Name "localadmin"
+
+Disable local user:
+Disable-LocalUser -Name "localadmin"
+
+Get local user:
+Get-LocalUser -Name "localadmin"
+
+Remove local user:
+Remove-LocalUser -Name "localadmin"
+
+List local groups:
+Get-LocalGroup
+
+List members of local Administrators:
+Get-LocalGroupMember -Group "Administrators"
+
+Add local user to local Administrators:
+Add-LocalGroupMember -Group "Administrators" -Member "localadmin"
+
+Remove local user from local Administrators:
+Remove-LocalGroupMember -Group "Administrators" -Member "localadmin"
+
+Add domain user to local Administrators:
+Add-LocalGroupMember -Group "Administrators" -Member "ABC\sam.smith"
+
+Add domain group to local Administrators:
+Add-LocalGroupMember -Group "Administrators" -Member "ABC\IT-Admins"
+
+======================================================================
+9. REMOTE DESKTOP (RDP)
+======================================================================
+
+IMPORTANT:
+Enabling RDP changes remote access exposure. In production, combine RDP
+with firewall restrictions, network controls, MFA/NLA where applicable,
+and organizational policy.
+
+Check RDP registry setting:
+Get-ItemPropertyValue `
+    "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" `
+    -Name fDenyTSConnections
+
+Enable RDP:
+Set-ItemProperty `
+    "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" `
+    -Name fDenyTSConnections -Value 0
+
+Enable Remote Desktop firewall rules:
+Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+Disable RDP:
+Set-ItemProperty `
+    "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" `
+    -Name fDenyTSConnections -Value 1
+
+Disable Remote Desktop firewall rules:
+Disable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+Enable Network Level Authentication:
+Set-ItemProperty `
+    "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" `
+    -Name UserAuthentication -Value 1
+
+List members of Remote Desktop Users:
+Get-LocalGroupMember -Group "Remote Desktop Users"
+
+Add local user to Remote Desktop Users:
+Add-LocalGroupMember -Group "Remote Desktop Users" -Member "localadmin"
+
+Add domain user to Remote Desktop Users:
+Add-LocalGroupMember -Group "Remote Desktop Users" -Member "ABC\sam.smith"
+
+Remove user from Remote Desktop Users:
+Remove-LocalGroupMember -Group "Remote Desktop Users" -Member "ABC\sam.smith"
+
+======================================================================
+10. POWERSHELL REMOTING / WINRM
+======================================================================
+
+Check WinRM:
+Get-Service WinRM
+
+Check remoting:
+Test-WSMan PC01
+
+Enable PowerShell remoting on the local computer:
+Enable-PSRemoting -Force
+
+This configures WinRM and the required firewall rules for PowerShell
+remoting according to Windows remoting configuration.
+
+Disable PowerShell remoting:
+Disable-PSRemoting -Force
+
+Start WinRM:
+Start-Service WinRM
+
+Stop WinRM:
+Stop-Service WinRM
+
+Set WinRM automatic:
+Set-Service WinRM -StartupType Automatic
+
+Check WinRM listener:
+winrm enumerate winrm/config/listener
+
+Run command remotely:
+Invoke-Command -ComputerName PC01 -ScriptBlock {
+    Get-ComputerInfo
+}
+
+Run command against multiple computers:
+Invoke-Command -ComputerName PC01,PC02,PC03 -ScriptBlock {
+    Get-Service Spooler
+}
+
+Interactive remote session:
+Enter-PSSession -ComputerName PC01
+
+Exit session:
+Exit-PSSession
+
+Create a persistent remote session:
+$Session = New-PSSession -ComputerName PC01
+
+Use session:
+Invoke-Command -Session $Session -ScriptBlock {
+    Get-Service
+}
+
+Remove session:
+Remove-PSSession $Session
+
+Enable remoting on multiple domain computers remotely, where authorized:
+Invoke-Command -ComputerName PC01,PC02 -ScriptBlock {
+    Enable-PSRemoting -Force
+}
+
+======================================================================
+11. SYSTEM INFORMATION
+======================================================================
+
+Full computer information:
+Get-ComputerInfo
+
+Useful summary:
+Get-ComputerInfo |
+    Select-Object CsName, WindowsProductName, WindowsVersion, OsBuildNumber
+
+Operating system:
+Get-CimInstance Win32_OperatingSystem
+
+BIOS:
+Get-CimInstance Win32_BIOS
+
+CPU:
+Get-CimInstance Win32_Processor
+
+Memory:
+Get-CimInstance Win32_ComputerSystem |
+    Select-Object TotalPhysicalMemory
+
+System uptime:
+(Get-CimInstance Win32_OperatingSystem).LastBootUpTime
+
+Computer system:
+Get-CimInstance Win32_ComputerSystem
+
+======================================================================
+12. PROCESSES
+======================================================================
+
+List processes:
+Get-Process
+
+Find process:
+Get-Process -Name chrome
+
+Process details:
+Get-Process chrome | Select-Object *
+
+Top CPU processes:
+Get-Process |
+    Sort-Object CPU -Descending |
+    Select-Object -First 10 Name,Id,CPU
+
+Top memory processes:
+Get-Process |
+    Sort-Object WorkingSet -Descending |
+    Select-Object -First 10 Name,Id,WorkingSet
+
+Stop process:
+Stop-Process -Name notepad
+
+Force stop:
+Stop-Process -Name notepad -Force
+
+Find process by PID:
+Get-Process -Id 1234
+
+======================================================================
+13. WINDOWS SERVICES
+======================================================================
+
+List services:
+Get-Service
+
+Find service:
+Get-Service -Name Spooler
+
+Stopped services:
+Get-Service | Where-Object Status -eq "Stopped"
+
+Stopped automatic services:
+Get-Service |
+    Where-Object {$_.Status -eq "Stopped" -and $_.StartType -eq "Automatic"}
+
+Start service:
+Start-Service Spooler
+
+Stop service:
+Stop-Service Spooler
+
+Restart service:
+Restart-Service Spooler
+
+Set automatic:
+Set-Service Spooler -StartupType Automatic
+
+Set manual:
+Set-Service Spooler -StartupType Manual
+
+Set disabled:
+Set-Service Spooler -StartupType Disabled
+
+======================================================================
+14. DISKS / STORAGE
+======================================================================
+
+List physical disks:
+Get-Disk
+
+List partitions:
+Get-Partition
+
+List volumes:
+Get-Volume
+
+Logical disk information:
+Get-CimInstance Win32_LogicalDisk
+
+Free disk space:
+Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" |
+    Select-Object DeviceID,
+        @{Name="SizeGB";Expression={[math]::Round($_.Size/1GB,2)}},
+        @{Name="FreeGB";Expression={[math]::Round($_.FreeSpace/1GB,2)}}
+
+Drives with less than 10 GB free:
+Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" |
+    Where-Object {$_.FreeSpace -lt 10GB} |
+    Select-Object DeviceID,FreeSpace
+
+======================================================================
+15. NETWORKING
+======================================================================
+
+Network configuration:
+Get-NetIPConfiguration
+
+IP addresses:
+Get-NetIPAddress
+
+Network adapters:
+Get-NetAdapter
+
+Disabled adapters:
+Get-NetAdapter | Where-Object Status -eq "Disabled"
+
+DNS server configuration:
+Get-DnsClientServerAddress
+
+DNS lookup:
+Resolve-DnsName DC01.abc.local
+
+Test ping:
+Test-Connection DC01.abc.local
+
+Test SMB:
+Test-NetConnection DC01.abc.local -Port 445
+
+Test LDAP:
+Test-NetConnection DC01.abc.local -Port 389
+
+Test LDAPS:
+Test-NetConnection DC01.abc.local -Port 636
+
+Test Kerberos:
+Test-NetConnection DC01.abc.local -Port 88
+
+Test DNS:
+Test-NetConnection DC01.abc.local -Port 53
+
+Test HTTPS:
+Test-NetConnection google.com -Port 443
+
+Show routing table:
+Get-NetRoute
+
+Show ARP/neighbor cache:
+Get-NetNeighbor
+
+======================================================================
+16. FIREWALL
+======================================================================
+
+Firewall profiles:
+Get-NetFirewallProfile
+
+Firewall rules:
+Get-NetFirewallRule
+
+Enabled inbound rules:
+Get-NetFirewallRule |
+    Where-Object {$_.Direction -eq "Inbound" -and $_.Enabled -eq "True"}
+
+Enable firewall profiles:
+Set-NetFirewallProfile -Profile Domain,Private,Public -Enabled True
+
+Disable firewall profile (use only when authorized):
+Set-NetFirewallProfile -Profile Domain -Enabled False
+
+Create inbound TCP rule:
+New-NetFirewallRule `
+    -DisplayName "Allow TCP 8443" `
+    -Direction Inbound `
+    -Protocol TCP `
+    -LocalPort 8443 `
+    -Action Allow
+
+Remove rule:
+Remove-NetFirewallRule -DisplayName "Allow TCP 8443"
+
+======================================================================
+17. EVENT VIEWER / WINDOWS EVENT LOGS
+======================================================================
+
+List event logs:
+Get-WinEvent -ListLog *
+
+Recent System events:
+Get-WinEvent -LogName System -MaxEvents 50
+
+Recent Application events:
+Get-WinEvent -LogName Application -MaxEvents 50
+
+Recent Security events:
+Get-WinEvent -LogName Security -MaxEvents 50
+
+Only ERROR events from System:
+Get-WinEvent -FilterHashtable @{
+    LogName = "System"
+    Level = 2
+} -MaxEvents 100
+
+Only WARNING events from System:
+Get-WinEvent -FilterHashtable @{
+    LogName = "System"
+    Level = 3
+} -MaxEvents 100
+
+Only ERROR events from Application:
+Get-WinEvent -FilterHashtable @{
+    LogName = "Application"
+    Level = 2
+} -MaxEvents 100
+
+Only ERROR events from Security:
+Get-WinEvent -FilterHashtable @{
+    LogName = "Security"
+    Level = 2
+} -MaxEvents 100
+
+ERROR events from last 24 hours:
+Get-WinEvent -FilterHashtable @{
+    LogName = "System"
+    Level = 2
+    StartTime = (Get-Date).AddHours(-24)
+} -MaxEvents 200
+
+Specific event ID:
+Get-WinEvent -FilterHashtable @{
+    LogName = "System"
+    Id = 7031
+} -MaxEvents 50
+
+Multiple event IDs:
+Get-WinEvent -FilterHashtable @{
+    LogName = "Security"
+    Id = 4624,4625
+} -MaxEvents 100
+
+Failed logons:
+Get-WinEvent -FilterHashtable @{
+    LogName = "Security"
+    Id = 4625
+} -MaxEvents 100
+
+Successful logons:
+Get-WinEvent -FilterHashtable @{
+    LogName = "Security"
+    Id = 4624
+} -MaxEvents 100
+
+Service crash/failure examples:
+Get-WinEvent -FilterHashtable @{
+    LogName = "System"
+    Id = 7031,7034
+} -MaxEvents 100
+
+Export event results:
+Get-WinEvent -FilterHashtable @{
+    LogName = "System"
+    Level = 2
+} -MaxEvents 100 |
+Export-Csv "C:\Reports\SystemErrors.csv" -NoTypeInformation
+
+======================================================================
+18. FILES AND FOLDERS
+======================================================================
+
+List folder:
+Get-ChildItem C:\Scripts
+
+Recursive listing:
+Get-ChildItem C:\Scripts -Recurse
+
+Create folder:
+New-Item -Path C:\Reports -ItemType Directory
+
+Create file:
+New-Item -Path C:\Reports\test.txt -ItemType File
+
+Copy:
+Copy-Item C:\Scripts\test.ps1 C:\Backup\
+
+Move:
+Move-Item C:\Temp\report.txt C:\Reports\
+
+Delete:
+Remove-Item C:\Temp\report.txt
+
+Find large files:
+Get-ChildItem C:\ -File -Recurse -ErrorAction SilentlyContinue |
+    Sort-Object Length -Descending |
+    Select-Object -First 20 FullName,
+        @{Name="SizeGB";Expression={[math]::Round($_.Length/1GB,2)}}
+
+======================================================================
+19. NTFS PERMISSIONS
+======================================================================
+
+View ACL:
+Get-Acl C:\Shared
+
+View access rules:
+(Get-Acl C:\Shared).Access
+
+Export permissions:
+(Get-Acl C:\Shared).Access |
+    Export-Csv C:\Reports\SharedPermissions.csv -NoTypeInformation
+
+Copy permissions from one folder to another:
+Get-Acl C:\Source | Set-Acl C:\Destination
+
+IMPORTANT:
+Use Set-Acl carefully. Test permissions before changing production
+file-server ACLs.
+
+======================================================================
+20. SCHEDULED TASKS
+======================================================================
+
+List scheduled tasks:
+Get-ScheduledTask
+
+Find task:
+Get-ScheduledTask -TaskName "BackupTask"
+
+Run task:
+Start-ScheduledTask -TaskName "BackupTask"
+
+Enable task:
+Enable-ScheduledTask -TaskName "BackupTask"
+
+Disable task:
+Disable-ScheduledTask -TaskName "BackupTask"
+
+Get task information:
+Get-ScheduledTaskInfo -TaskName "BackupTask"
+
+======================================================================
+21. SOFTWARE INVENTORY
+======================================================================
+
+WARNING:
+Win32_Product can trigger Windows Installer consistency checks.
+Do not use it routinely just for software inventory.
+
+Registry-based 64-bit application inventory:
+Get-ItemProperty `
+    "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
+    Select-Object DisplayName,DisplayVersion,Publisher
+
+32-bit application inventory on 64-bit Windows:
+Get-ItemProperty `
+    "HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" |
+    Select-Object DisplayName,DisplayVersion,Publisher
+
+======================================================================
+22. WINDOWS UPDATE
+======================================================================
+
+If the appropriate Windows Update module/tooling is installed:
+
+Get-WindowsUpdate
+
+Install updates:
+Install-WindowsUpdate
+
+In managed production environments, patching is commonly controlled through
+enterprise tools such as WSUS, Configuration Manager, Intune, or another
+approved patch-management platform.
+
+======================================================================
+23. REGISTRY
+======================================================================
+
+Read registry key:
+Get-ItemProperty `
+    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion"
+
+Read specific registry value:
+Get-ItemPropertyValue `
+    "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" `
+    -Name ProductName
+
+Create registry key:
+New-Item "HKLM:\SOFTWARE\Company"
+
+IMPORTANT:
+Registry changes can affect Windows behavior. Test and document changes.
+
+======================================================================
+24. ENVIRONMENT VARIABLES
+======================================================================
+
+List environment variables:
+Get-ChildItem Env:
+
+PATH:
+$env:PATH
+
+Computer name:
+$env:COMPUTERNAME
+
+Username:
+$env:USERNAME
+
+======================================================================
+25. REMOTE FILE MANAGEMENT
+======================================================================
+
+Copy to administrative share:
+Copy-Item "C:\Scripts\script.ps1" "\\PC01\C$\Scripts\"
+
+Copy multiple files:
+Copy-Item "C:\Scripts\*" "\\PC01\C$\Scripts\" -Recurse
+
+Remote command:
+Invoke-Command -ComputerName PC01 -ScriptBlock {
+    Get-ChildItem C:\Scripts
+}
+
+======================================================================
+26. BULK REMOTE ADMINISTRATION
+======================================================================
+
+Multiple computers:
+$Computers = @("PC01","PC02","PC03")
+
+Check a service:
+Invoke-Command -ComputerName $Computers -ScriptBlock {
+    Get-Service Spooler
+}
+
+Check operating system:
+Invoke-Command -ComputerName $Computers -ScriptBlock {
+    Get-CimInstance Win32_OperatingSystem |
+        Select-Object CSName,Caption,Version,LastBootUpTime
+}
+
+Restart a service on multiple computers:
+Invoke-Command -ComputerName $Computers -ScriptBlock {
+    Restart-Service Spooler
+}
+
+IMPORTANT:
+Use validation, logging, error handling, maintenance windows and change
+approval before broad production actions.
+
+======================================================================
+27. CSV / BULK ADMINISTRATION
+======================================================================
+
+Import CSV:
+Import-Csv C:\Scripts\users.csv
+
+Export users:
+Get-ADUser -Filter * |
+    Select-Object Name,SamAccountName,Enabled |
+    Export-Csv C:\Reports\ADUsers.csv -NoTypeInformation
+
+Export computers:
+Get-ADComputer -Filter * |
+    Select-Object Name,Enabled |
+    Export-Csv C:\Reports\ADComputers.csv -NoTypeInformation
+
+Bulk users:
+Import-Csv C:\Scripts\users.csv | ForEach-Object {
+
+    $username = "$($_.FirstName).$($_.LastName)".ToLower()
+
+    New-ADUser `
+        -Name "$($_.FirstName) $($_.LastName)" `
+        -GivenName $_.FirstName `
+        -Surname $_.LastName `
+        -SamAccountName $username `
+        -UserPrincipalName "$username@abc.local" `
+        -Department $_.Department `
+        -Path "OU=$($_.Department),OU=Employee,DC=abc,DC=local" `
+        -AccountPassword (Read-Host "Temporary password" -AsSecureString) `
+        -Enabled $true `
+        -ChangePasswordAtLogon $true
+}
+
+======================================================================
+28. COMPUTER HEALTH CHECK SCRIPT
+======================================================================
+
+$Computer = $env:COMPUTERNAME
+
+Write-Host "===== SYSTEM HEALTH CHECK ====="
+Write-Host "Computer: $Computer"
+
+Write-Host "`n===== OS ====="
+Get-CimInstance Win32_OperatingSystem |
+    Select-Object Caption,Version,LastBootUpTime
+
+Write-Host "`n===== DISK ====="
+Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" |
+    Select-Object DeviceID,
+        @{Name="SizeGB";Expression={[math]::Round($_.Size/1GB,2)}},
+        @{Name="FreeGB";Expression={[math]::Round($_.FreeSpace/1GB,2)}}
+
+Write-Host "`n===== STOPPED AUTOMATIC SERVICES ====="
+Get-Service |
+    Where-Object {$_.Status -eq "Stopped" -and $_.StartType -eq "Automatic"} |
+    Select-Object Name,DisplayName,Status
+
+Write-Host "`n===== NETWORK ====="
+Get-NetIPConfiguration
+
+Write-Host "`n===== TOP CPU PROCESSES ====="
+Get-Process |
+    Sort-Object CPU -Descending |
+    Select-Object -First 10 Name,Id,CPU
+
+======================================================================
+29. MULTIPLE COMPUTER HEALTH CHECK
+======================================================================
+
+$Computers = Get-ADComputer -Filter * |
+    Select-Object -ExpandProperty Name
+
+Invoke-Command -ComputerName $Computers -ScriptBlock {
+
+    $OS = Get-CimInstance Win32_OperatingSystem
+    $Disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+
+    [PSCustomObject]@{
+        ComputerName = $env:COMPUTERNAME
+        OS = $OS.Caption
+        LastBoot = $OS.LastBootUpTime
+        DiskFreeGB = [math]::Round($Disk.FreeSpace / 1GB,2)
+        MemoryGB = [math]::Round($OS.TotalVisibleMemorySize / 1MB,2)
+    }
+
+} | Export-Csv "C:\Reports\ComputerHealth.csv" -NoTypeInformation
+
+======================================================================
+30. ERROR HANDLING
+======================================================================
+
+Basic try/catch:
+try {
+    Get-ADUser sam.smith -ErrorAction Stop
+}
+catch {
+    Write-Host "Failed to find the user:"
+    Write-Host $_.Exception.Message
+}
+
+Service example:
+try {
+    Restart-Service Spooler -ErrorAction Stop
+}
+catch {
+    Write-Host "Failed to restart Spooler:"
+    Write-Host $_.Exception.Message
+}
+
+======================================================================
+31. LOGGING ADMIN SCRIPTS
+======================================================================
+
+$LogFile = "C:\Logs\AdminScript.log"
+
+New-Item -Path "C:\Logs" -ItemType Directory -Force | Out-Null
+
+"$(Get-Date) - Script started" |
+    Out-File $LogFile -Append
+
+"$(Get-Date) - Checking services" |
+    Out-File $LogFile -Append
+
+Get-Service |
+    Where-Object Status -eq "Stopped" |
+    Out-File $LogFile -Append
+
+"$(Get-Date) - Script completed" |
+    Out-File $LogFile -Append
+
+======================================================================
+32. USEFUL ADMIN ONE-LINERS
+======================================================================
+
+Who am I:
+whoami
+
+Current user:
+$env:USERNAME
+
+Computer name:
+$env:COMPUTERNAME
+
+Windows version:
+Get-ComputerInfo | Select-Object WindowsProductName,WindowsVersion,OsBuildNumber
+
+Uptime:
+(Get-CimInstance Win32_OperatingSystem).LastBootUpTime
+
+Top CPU:
+Get-Process | Sort-Object CPU -Descending | Select-Object -First 10
+
+Top memory:
+Get-Process | Sort-Object WorkingSet -Descending | Select-Object -First 10
+
+Stopped services:
+Get-Service | Where-Object Status -eq "Stopped"
+
+Stopped automatic services:
+Get-Service | Where-Object {$_.Status -eq "Stopped" -and $_.StartType -eq "Automatic"}
+
+Check domain:
+Get-CimInstance Win32_ComputerSystem | Select-Object Name,Domain,PartOfDomain
+
+Check DC connectivity:
+Test-Connection DC01.abc.local
+
+Check SMB:
+Test-NetConnection DC01.abc.local -Port 445
+
+Check LDAP:
+Test-NetConnection DC01.abc.local -Port 389
+
+Check Kerberos:
+Test-NetConnection DC01.abc.local -Port 88
+
+Check DNS:
+Resolve-DnsName abc.local
+
+Check PowerShell remoting:
+Test-WSMan PC01
+
+======================================================================
+33. CORE POWERSHELL AUTOMATION COMMANDS
+======================================================================
+
+Variables:
+$Computer = "PC01"
+
+Arrays:
+$Computers = @("PC01","PC02","PC03")
+
+Pipeline:
+Get-Service | Where-Object Status -eq "Running"
+
+Select properties:
+Get-Process | Select-Object Name,Id,CPU
+
+Sort:
+Get-Process | Sort-Object CPU -Descending
+
+Filter:
+Get-ADUser -Filter 'Enabled -eq $false'
+
+ForEach-Object:
+Get-ADUser -Filter * | ForEach-Object {
+    Write-Host $_.SamAccountName
+}
+
+foreach loop:
+foreach ($Computer in $Computers) {
+    Test-Connection $Computer -Count 1
+}
+
+Conditional:
+if ($value -eq "Something") {
+    Write-Host "Match"
+}
+
+Function:
+function Get-SystemHealth {
+    Get-ComputerInfo
+    Get-Service
+    Get-NetIPConfiguration
+}
+
+Run function:
+Get-SystemHealth
+
+======================================================================
+34. PRODUCTION SCRIPTING PATTERN
+======================================================================
+
+A practical production script should normally consider:
+
+1. Least privilege
+2. Input validation
+3. Error handling
+4. Logging
+5. Clear output/reporting
+6. Testing before deployment
+7. Change management
+8. Maintenance window when required
+9. Backup/recovery plan for destructive changes
+10. Idempotency where possible
+11. Secure credential handling
+12. Scope limitation
+13. Confirmation for destructive actions
+14. Appropriate permissions
+15. Auditability
+
+Useful pattern:
+
+$Computers = @("PC01","PC02","PC03")
+$LogFile = "C:\Logs\Admin.log"
+
+New-Item -Path "C:\Logs" -ItemType Directory -Force | Out-Null
+
+foreach ($Computer in $Computers) {
+
+    try {
+
+        "[$(Get-Date)] Starting $Computer" |
+            Out-File $LogFile -Append
+
+        Invoke-Command -ComputerName $Computer -ScriptBlock {
+            Get-ComputerInfo |
+                Select-Object CsName,WindowsProductName,WindowsVersion
+        } -ErrorAction Stop
+
+        "[$(Get-Date)] Completed $Computer" |
+            Out-File $LogFile -Append
+
+    }
+    catch {
+
+        "[$(Get-Date)] FAILED $Computer : $($_.Exception.Message)" |
+            Out-File $LogFile -Append
+    }
+}
+
+======================================================================
+35. COMMON SYSTEM ADMINISTRATOR AREAS TO PRACTICE
+======================================================================
+
+Active Directory:
+- Users
+- Groups
+- OUs
+- Computers
+- Passwords
+- Account lockouts
+- Group membership
+- Computer accounts
+- Domain join
+
+Windows systems:
+- Services
+- Processes
+- Event logs
+- Disk space
+- CPU
+- Memory
+- Windows version
+- Uptime
+- Scheduled tasks
+- Software inventory
+
+Networking:
+- IP configuration
+- DNS
+- Connectivity
+- TCP ports
+- Routing
+- Network adapters
+- Firewall
+
+Remote administration:
+- PowerShell Remoting
+- WinRM
+- RDP
+- Administrative shares
+- Invoke-Command
+- Enter-PSSession
+
+Security:
+- Local administrators
+- Remote Desktop Users
+- Firewall
+- Security event logs
+- Failed logons
+- Account status
+- Privileged AD groups
+- NTFS permissions
+
+Automation:
+- CSV imports
+- CSV exports
+- Loops
+- Functions
+- Error handling
+- Logging
+- Scheduled tasks
+- Multi-computer administration
+
+======================================================================
+END OF POWERSHELL SYSTEM ADMINISTRATOR REFERENCE
+======================================================================
