@@ -1138,7 +1138,7 @@ Run function:
 Get-SystemHealth
 
 ======================================================================
-34. PRODUCTION SCRIPTING PATTERN
+34. PRODUCTION Environment SCRIPTING 
 ======================================================================
 
 A practical production script should normally consider:
