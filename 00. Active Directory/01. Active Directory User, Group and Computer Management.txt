@@ -1,136 +1,210 @@
-Active Directory User, Group and Computer Management with PowerShell
+ACTIVE DIRECTORY USER, GROUP, COMPUTER AND OU MANAGEMENT WITH POWERSHELL
+=========================================================================
 
-A practical collection of PowerShell commands for day-to-day Active Directory administration.
+A practical PowerShell reference for common day-to-day Windows and Active Directory administration.
+
+This reference focuses on the commands most commonly useful for managing users, groups, computers, OUs, domain information, privileged groups, local groups, Remote Desktop, PowerShell remoting, and basic domain policy.
+
+ENVIRONMENT AND DOMAIN DISCOVERY
+================================
+
+1. Get Active Directory domain information
+
+Get-ADDomain
+
+
+2. Get Active Directory forest information
+
+Get-ADForest
+
+
+3. List all domain controllers
+
+Get-ADDomainController -Filter *
+
+
+4. Discover an available domain controller
+
+Get-ADDomainController -Discover
+
+
+ORGANIZATIONAL UNIT (OU) MANAGEMENT
+===================================
+
+5. List organizational units
+
+Get-ADOrganizationalUnit -Filter *
+
+
+6. Get information about a specific OU
+
+Get-ADOrganizationalUnit -Identity "OU=IT,OU=Employees,DC=abc,DC=local"
+
+
+7. Create an organizational unit
+
+New-ADOrganizationalUnit -Name "IT" -Path "OU=Employees,DC=abc,DC=local"
+
+
+8. Modify an OU description
+
+Set-ADOrganizationalUnit -Identity "OU=IT,OU=Employees,DC=abc,DC=local" -Description "IT Department"
+
+
+9. Remove an organizational unit
+
+Remove-ADOrganizationalUnit -Identity "OU=IT,OU=Employees,DC=abc,DC=local" -Confirm
+
 
 USER MANAGEMENT
 ===============
 
-1. Create a user
+10. Create a user
 
 New-ADUser -Name "Sam Smith" -GivenName "Sam" -Surname "Smith" -SamAccountName "sam.smith" -UserPrincipalName "sam.smith@abc.local" -Path "OU=IT,OU=Employees,DC=abc,DC=local" -AccountPassword (Read-Host "Enter temporary password" -AsSecureString) -Enabled $true -ChangePasswordAtLogon $true
 
 
-2. Get user information
+11. Get user information
 
 Get-ADUser -Identity "sam.smith"
 
 
-3. Get detailed user information
+12. Get detailed user information
 
 Get-ADUser -Identity "sam.smith" -Properties *
 
 
-4. Get selected user properties
+13. Get selected user properties
 
 Get-ADUser -Identity "sam.smith" -Properties Department,Title,EmailAddress,OfficePhone,LastLogonDate | Select-Object Name,SamAccountName,Department,Title,EmailAddress,OfficePhone,LastLogonDate
 
 
-5. Enable a user account
+14. Enable a user account
 
 Enable-ADAccount -Identity "sam.smith"
 
 
-6. Disable a user account
+15. Disable a user account
 
 Disable-ADAccount -Identity "sam.smith"
 
 
-7. Unlock a locked user account
+16. Unlock a locked user account
 
 Unlock-ADAccount -Identity "sam.smith"
 
 
-8. Check whether a user account is locked
+17. Check whether a user account is locked
 
 Get-ADUser -Identity "sam.smith" -Properties LockedOut | Select-Object Name,LockedOut
 
 
-9. Reset a user's password
+18. Reset a user's password
 
 Set-ADAccountPassword -Identity "sam.smith" -Reset -NewPassword (Read-Host "Enter new password" -AsSecureString)
 
 
-10. Force the user to change their password at next logon
+19. Force the user to change their password at next logon
 
 Set-ADUser -Identity "sam.smith" -ChangePasswordAtLogon $true
 
 
-11. Check password status
+20. Check password status
 
 Get-ADUser -Identity "sam.smith" -Properties PasswordExpired,PasswordNeverExpires,PasswordLastSet | Select-Object Name,PasswordExpired,PasswordNeverExpires,PasswordLastSet
 
 
-12. Check account expiration
+21. Check account expiration
 
 Get-ADUser -Identity "sam.smith" -Properties AccountExpirationDate | Select-Object Name,AccountExpirationDate
 
 
-13. Set an account expiration date
+22. Set an account expiration date
 
 Set-ADAccountExpiration -Identity "sam.smith" -DateTime "2026-12-31"
 
 
-14. Clear account expiration
+23. Clear account expiration
 
 Clear-ADAccountExpiration -Identity "sam.smith"
 
 
-15. Set a user as a password-never-expires account
+24. Set a user account to never expire its password
 
 Set-ADUser -Identity "sam.smith" -PasswordNeverExpires $true
 
 
-16. Allow the user password to expire normally
+25. Allow the user password to expire normally
 
 Set-ADUser -Identity "sam.smith" -PasswordNeverExpires $false
 
 
-17. Modify user department, title and contact information
+26. Prevent a user from changing their password
+
+Set-ADUser -Identity "sam.smith" -CannotChangePassword $true
+
+
+27. Allow a user to change their password
+
+Set-ADUser -Identity "sam.smith" -CannotChangePassword $false
+
+
+28. Modify user department, title, and contact information
 
 Set-ADUser -Identity "sam.smith" -Department "IT" -Title "IT Support Analyst" -EmailAddress "sam.smith@abc.local" -OfficePhone "12345678"
 
 
-18. Move a user to another OU
+29. Set a user's description
+
+Set-ADUser -Identity "sam.smith" -Description "IT Support Analyst"
+
+
+30. Clear a user's description
+
+Set-ADUser -Identity "sam.smith" -Clear Description
+
+
+31. Move a user to another OU
 
 Move-ADObject -Identity "CN=Sam Smith,OU=IT,OU=Employees,DC=abc,DC=local" -TargetPath "OU=HR,OU=Employees,DC=abc,DC=local"
 
 
-19. Rename a user account
+32. Rename a user object
 
-Rename-ADObject -Identity "CN=Sam Smith,OU=IT,OU=Employees,DC=abc,DC=local" -NewName "Sam Smith"
+Rename-ADObject -Identity "CN=Sam Smith,OU=IT,OU=Employees,DC=abc,DC=local" -NewName "Samuel Smith"
 
 
-20. Search for users
+33. Search for users
 
 Get-ADUser -Filter 'Name -like "*Sam*"'
 
 
-21. Get all users from a specific OU
+34. Get all users from a specific OU
 
 Get-ADUser -SearchBase "OU=IT,OU=Employees,DC=abc,DC=local" -Filter *
 
 
-22. Find disabled user accounts
+35. Find disabled user accounts
 
 Search-ADAccount -AccountDisabled -UsersOnly
 
 
-23. Find locked-out user accounts
+36. Find locked-out user accounts
 
 Search-ADAccount -LockedOut -UsersOnly
 
 
-24. Find users whose passwords have expired
+37. Find users whose passwords have expired
 
 Search-ADAccount -PasswordExpired -UsersOnly
 
 
-25. Get a user's last logon information
+38. Get a user's last logon information
 
 Get-ADUser -Identity "sam.smith" -Properties LastLogonDate | Select-Object Name,LastLogonDate
 
 
-26. Delete a user account
+39. Delete a user account
 
 Remove-ADUser -Identity "sam.smith" -Confirm
 
@@ -138,280 +212,414 @@ Remove-ADUser -Identity "sam.smith" -Confirm
 GROUP MANAGEMENT
 ================
 
-27. Create a security group
+40. Create a security group
 
 New-ADGroup -Name "IT-Users" -SamAccountName "IT-Users" -GroupCategory Security -GroupScope Global -Path "OU=Groups,DC=abc,DC=local"
 
 
-28. Get group information
+41. Get group information
 
 Get-ADGroup -Identity "IT-Users"
 
 
-29. Get members of a group
-
-Get-ADGroupMember -Identity "IT-Users"
-
-
-30. Add a user to a group
-
-Add-ADGroupMember -Identity "IT-Users" -Members "sam.smith"
-
-
-31. Remove a user from a group
-
-Remove-ADGroupMember -Identity "IT-Users" -Members "sam.smith"
-
-
-32. Check which groups a user belongs to
-
-Get-ADPrincipalGroupMembership -Identity "sam.smith"
-
-
-33. Add multiple users to a group
-
-Add-ADGroupMember -Identity "IT-Users" -Members "sam.smith","john.doe","alex.jones"
-
-
-34. Get all groups
+42. Get all groups
 
 Get-ADGroup -Filter *
 
 
-35. Find groups with a specific name
+43. Find groups with a specific name
 
 Get-ADGroup -Filter 'Name -like "*IT*"'
 
 
-36. Get members of a group including nested groups
+44. Get members of a group
+
+Get-ADGroupMember -Identity "IT-Users"
+
+
+45. Get members of a group including nested groups
 
 Get-ADGroupMember -Identity "IT-Users" -Recursive
 
 
-37. Check whether a user is a member of a specific group
+46. Add a user to a group
+
+Add-ADGroupMember -Identity "IT-Users" -Members "sam.smith"
+
+
+47. Add multiple users to a group
+
+Add-ADGroupMember -Identity "IT-Users" -Members "sam.smith","john.doe","alex.jones"
+
+
+48. Add a group to another group
+
+Add-ADGroupMember -Identity "IT-Users" -Members "Helpdesk-Users"
+
+
+49. Remove a user from a group
+
+Remove-ADGroupMember -Identity "IT-Users" -Members "sam.smith"
+
+
+50. Remove a group from another group
+
+Remove-ADGroupMember -Identity "IT-Users" -Members "Helpdesk-Users"
+
+
+51. Check which groups a user belongs to
+
+Get-ADPrincipalGroupMembership -Identity "sam.smith"
+
+
+52. Check whether a user is a member of a specific group
 
 Get-ADGroupMember -Identity "IT-Users" -Recursive | Where-Object {$_.SamAccountName -eq "sam.smith"}
 
 
-38. Remove a group
+53. Remove a group
 
 Remove-ADGroup -Identity "IT-Users" -Confirm
+
+
+PRIVILEGED GROUP MANAGEMENT
+===========================
+
+54. List members of Domain Admins
+
+Get-ADGroupMember -Identity "Domain Admins"
+
+
+55. List members of Enterprise Admins
+
+Get-ADGroupMember -Identity "Enterprise Admins"
+
+
+56. List members of Schema Admins
+
+Get-ADGroupMember -Identity "Schema Admins"
+
+
+57. Check a user's privileged group membership
+
+Get-ADPrincipalGroupMembership -Identity "admin.user"
+
+
+58. Add a user to Domain Admins ONLY when explicitly authorized
+
+Add-ADGroupMember -Identity "Domain Admins" -Members "admin.user"
+
+
+59. Add a user to Enterprise Admins ONLY when explicitly authorized
+
+Add-ADGroupMember -Identity "Enterprise Admins" -Members "admin.user"
+
+
+60. Add a user to Schema Admins ONLY when explicitly authorized
+
+Add-ADGroupMember -Identity "Schema Admins" -Members "admin.user"
+
+
+61. Remove a user from Domain Admins
+
+Remove-ADGroupMember -Identity "Domain Admins" -Members "admin.user"
+
+
+62. Remove a user from Enterprise Admins
+
+Remove-ADGroupMember -Identity "Enterprise Admins" -Members "admin.user"
+
+
+63. Remove a user from Schema Admins
+
+Remove-ADGroupMember -Identity "Schema Admins" -Members "admin.user"
 
 
 COMPUTER MANAGEMENT
 ===================
 
-39. Join the computer to the domain and rename it
+64. Join the computer to the domain and rename it
 
 Add-Computer -DomainName "abc.local" -Server "DC01.abc.local" -NewName "abc-001" -Credential (Get-Credential) -Restart
 
 
-40. Check the computer's domain membership
+65. Check the computer's domain membership
 
 Get-CimInstance Win32_ComputerSystem | Select-Object Name,Domain,PartOfDomain
 
 
-41. Get computer information from Active Directory
+66. Get computer information from Active Directory
 
 Get-ADComputer -Identity "abc-001"
 
 
-42. Get detailed computer information
+67. Get detailed computer information
 
 Get-ADComputer -Identity "abc-001" -Properties *
 
 
-43. Get selected computer properties
+68. Get selected computer properties
 
 Get-ADComputer -Identity "abc-001" -Properties OperatingSystem,OperatingSystemVersion,LastLogonDate,IPv4Address | Select-Object Name,OperatingSystem,OperatingSystemVersion,LastLogonDate,IPv4Address
 
 
-44. Enable a computer account
+69. Create a computer account in Active Directory
 
-Enable-ADAccount -Identity "abc-001"
-
-
-45. Disable a computer account
-
-Disable-ADAccount -Identity "abc-001"
+New-ADComputer -Name "abc-001" -SamAccountName "abc-001$" -Path "OU=Computers,DC=abc,DC=local"
 
 
-46. Reset a computer account
+70. Set a computer description
 
-Reset-ADComputerMachinePassword -Server "DC01.abc.local" -Credential (Get-Credential)
-
-
-47. Reset the computer account in Active Directory
-
-Reset-ADComputer -Identity "abc-001"
+Set-ADComputer -Identity "abc-001" -Description "IT Department Computer"
 
 
-48. Get computers from a specific OU
+71. Get computers from a specific OU
 
 Get-ADComputer -SearchBase "OU=Computers,DC=abc,DC=local" -Filter *
 
 
-49. Find disabled computer accounts
-
-Search-ADAccount -AccountDisabled -ComputersOnly
-
-
-50. Move a computer to another OU
-
-Move-ADObject -Identity "CN=abc-001,CN=Computers,DC=abc,DC=local" -TargetPath "OU=Computers,DC=abc,DC=local"
-
-
-51. Rename a computer locally
-
-Rename-Computer -NewName "abc-002" -Restart
-
-
-52. Remove a computer from the domain and place it into a workgroup
-
-Remove-Computer -WorkgroupName "WORKGROUP" -Credential (Get-Credential) -Restart
-
-
-53. Remove a computer account from Active Directory
-
-Remove-ADComputer -Identity "abc-001" -Confirm
-
-
-54. Search for computers by name
+72. Search for computers by name
 
 Get-ADComputer -Filter 'Name -like "ABC-*"'
 
 
-55. Get the last logon information for a computer
-
-Get-ADComputer -Identity "abc-001" -Properties LastLogonDate | Select-Object Name,LastLogonDate
-
-
-56. Get inactive computers based on last logon date
-
-Get-ADComputer -Filter * -Properties LastLogonDate | Where-Object {$_.LastLogonDate -lt (Get-Date).AddDays(-90)} | Select-Object Name,LastLogonDate
-
-
-57. Get computers running a specific operating system
+73. Find computers running a specific operating system
 
 Get-ADComputer -Filter 'OperatingSystem -like "*Windows 11*"' -Properties OperatingSystem | Select-Object Name,OperatingSystem
 
 
-58. Check the local computer's domain and workgroup information
+74. Get a computer's last logon information
 
-Get-CimInstance Win32_ComputerSystem | Select-Object Name,Domain,PartOfDomain
+Get-ADComputer -Identity "abc-001" -Properties LastLogonDate | Select-Object Name,LastLogonDate
 
 
-59. Check the computer's current IP configuration
+75. Find inactive computers based on last logon date
+
+Get-ADComputer -Filter * -Properties LastLogonDate | Where-Object {$_.LastLogonDate -lt (Get-Date).AddDays(-90)} | Select-Object Name,LastLogonDate
+
+
+76. Find computers whose machine password has not changed recently
+
+Get-ADComputer -Filter * -Properties PasswordLastSet | Where-Object {$_.PasswordLastSet -lt (Get-Date).AddDays(-90)} | Select-Object Name,PasswordLastSet
+
+
+77. Enable a computer account
+
+Enable-ADAccount -Identity "abc-001"
+
+
+78. Disable a computer account
+
+Disable-ADAccount -Identity "abc-001"
+
+
+79. Reset a computer account in Active Directory
+
+Reset-ADComputer -Identity "abc-001"
+
+
+80. Reset the computer account password used by the machine
+
+Reset-ADComputerMachinePassword -Server "DC01.abc.local" -Credential (Get-Credential)
+
+
+81. Move a computer to another OU
+
+Move-ADObject -Identity "CN=abc-001,CN=Computers,DC=abc,DC=local" -TargetPath "OU=Computers,DC=abc,DC=local"
+
+
+82. Rename a computer locally
+
+Rename-Computer -NewName "abc-002" -Restart
+
+
+83. Remove a computer from the domain and place it into a workgroup
+
+Remove-Computer -WorkgroupName "WORKGROUP" -Credential (Get-Credential) -Restart
+
+
+84. Remove a computer account from Active Directory
+
+Remove-ADComputer -Identity "abc-001" -Confirm
+
+
+85. Check the computer's current IP configuration
 
 Get-NetIPConfiguration
 
 
-60. Test connectivity to a domain controller
+86. Test connectivity to a domain controller
 
 Test-Connection -ComputerName "DC01.abc.local" -Count 2
 
 
-61. Test whether the computer can locate a domain controller
+87. Test whether the computer can locate a domain controller
 
 Test-ComputerSecureChannel -Verbose
 
 
-62. Repair the computer's secure channel with the domain
+88. Repair the computer's secure channel with the domain
 
 Test-ComputerSecureChannel -Repair -Credential (Get-Credential)
 
 
-63. Get the computer's current logged-on user
+89. Get the computer's current logged-on user
 
 Get-CimInstance Win32_ComputerSystem | Select-Object Name,UserName
 
 
-64. Restart a remote computer
+90. Restart a remote computer
 
 Restart-Computer -ComputerName "abc-001" -Credential (Get-Credential) -Force
 
 
-65. Stop a remote computer
+91. Stop a remote computer
 
 Stop-Computer -ComputerName "abc-001" -Credential (Get-Credential) -Force
 
 
-66. Check whether PowerShell remoting is available on a computer
+LOCAL USER AND GROUP MANAGEMENT
+===============================
+
+92. Get local users
+
+Get-LocalUser
+
+
+93. Get local groups
+
+Get-LocalGroup
+
+
+94. List members of the local Administrators group
+
+Get-LocalGroupMember -Group "Administrators"
+
+
+95. Add a local user to the local Administrators group
+
+Add-LocalGroupMember -Group "Administrators" -Member "localadmin"
+
+
+96. Add a domain user or group to the local Administrators group
+
+Add-LocalGroupMember -Group "Administrators" -Member "ABC\IT-Admins"
+
+
+97. Remove a user or group from the local Administrators group
+
+Remove-LocalGroupMember -Group "Administrators" -Member "ABC\IT-Admins"
+
+
+REMOTE DESKTOP MANAGEMENT
+=========================
+
+98. List members of the local Remote Desktop Users group
+
+Get-LocalGroupMember -Group "Remote Desktop Users"
+
+
+99. Add a local user to Remote Desktop Users
+
+Add-LocalGroupMember -Group "Remote Desktop Users" -Member "localadmin"
+
+
+100. Add a domain user to Remote Desktop Users
+
+Add-LocalGroupMember -Group "Remote Desktop Users" -Member "ABC\sam.smith"
+
+
+101. Remove a user from Remote Desktop Users
+
+Remove-LocalGroupMember -Group "Remote Desktop Users" -Member "ABC\sam.smith"
+
+
+102. Enable Remote Desktop and allow it through the Windows Firewall
+
+Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
+Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+
+103. Disable Remote Desktop and its firewall rules
+
+Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 1
+Disable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+
+POWERSHELL REMOTING
+===================
+
+104. Check whether PowerShell remoting is available on a computer
 
 Test-WSMan -ComputerName "abc-001"
 
 
-67. Enable PowerShell remoting
+105. Enable PowerShell remoting
 
 Enable-PSRemoting -Force
 
 
-68. Disable PowerShell remoting
+106. Disable PowerShell remoting
 
 Disable-PSRemoting -Force
 
 
-69. Enable Remote Desktop
+ACCOUNT LOCKOUT AND DOMAIN POLICY
+=================================
 
-Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
-
-Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-
-
-70. Disable Remote Desktop
-
-Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 1
-
-Disable-NetFirewallRule -DisplayGroup "Remote Desktop"
-
-
-ACCOUNT LOCKOUT AND DOMAIN INFORMATION
-======================================
-
-71. Get the domain password and account lockout policy
+107. Get the domain password and account lockout policy
 
 Get-ADDefaultDomainPasswordPolicy
 
 
-72. Get the lockout threshold
+108. Get the account lockout threshold
 
 Get-ADDefaultDomainPasswordPolicy | Select-Object LockoutThreshold
 
 
-73. Get the lockout duration
+109. Get the account lockout duration
 
 Get-ADDefaultDomainPasswordPolicy | Select-Object LockoutDuration
 
 
-74. Get the minimum password length
+110. Get the minimum password length
 
 Get-ADDefaultDomainPasswordPolicy | Select-Object MinPasswordLength
 
 
-75. Get the maximum password age
+111. Get the maximum password age
 
 Get-ADDefaultDomainPasswordPolicy | Select-Object MaxPasswordAge
 
 
-76. Find all locked-out users
+112. Find all locked-out users
 
 Search-ADAccount -LockedOut -UsersOnly
 
 
-77. Find all disabled users
+113. Find all disabled users
 
 Search-ADAccount -AccountDisabled -UsersOnly
 
 
-78. Find all expired passwords
+114. Find all users with expired passwords
 
 Search-ADAccount -PasswordExpired -UsersOnly
 
 
-IMPORTANT DAY-TO-DAY COMMANDS
-=============================
+QUICK REFERENCE
+===============
 
-User:
+DOMAIN AND OU:
+Get-ADDomain
+Get-ADForest
+Get-ADDomainController
+Get-ADOrganizationalUnit
+New-ADOrganizationalUnit
+Set-ADOrganizationalUnit
+Remove-ADOrganizationalUnit
+
+USER:
 New-ADUser
 Get-ADUser
 Set-ADUser
@@ -423,9 +631,10 @@ Set-ADAccountExpiration
 Clear-ADAccountExpiration
 Search-ADAccount
 Move-ADObject
+Rename-ADObject
 Remove-ADUser
 
-Group:
+GROUP:
 New-ADGroup
 Get-ADGroup
 Get-ADGroupMember
@@ -434,9 +643,17 @@ Remove-ADGroupMember
 Get-ADPrincipalGroupMembership
 Remove-ADGroup
 
-Computer:
+PRIVILEGED GROUPS:
+Get-ADGroupMember
+Add-ADGroupMember
+Remove-ADGroupMember
+Get-ADPrincipalGroupMembership
+
+COMPUTER:
 Add-Computer
+New-ADComputer
 Get-ADComputer
+Set-ADComputer
 Enable-ADAccount
 Disable-ADAccount
 Reset-ADComputer
@@ -448,18 +665,49 @@ Remove-Computer
 Remove-ADComputer
 Restart-Computer
 Stop-Computer
+Test-Connection
+Get-NetIPConfiguration
+
+LOCAL USER AND GROUP:
+Get-LocalUser
+Get-LocalGroup
+Get-LocalGroupMember
+Add-LocalGroupMember
+Remove-LocalGroupMember
+
+REMOTE DESKTOP:
+Get-LocalGroupMember
+Add-LocalGroupMember
+Remove-LocalGroupMember
+Set-ItemProperty
+Enable-NetFirewallRule
+Disable-NetFirewallRule
+
+POWERSHELL REMOTING:
 Test-WSMan
 Enable-PSRemoting
 Disable-PSRemoting
+
+DOMAIN POLICY:
+Get-ADDefaultDomainPasswordPolicy
+Search-ADAccount
 
 
 NOTES
 =====
 
 - Run Active Directory cmdlets from a system with the Active Directory PowerShell module installed.
-- Commands that modify users, groups, or computers require appropriate permissions.
+- The Active Directory module can be loaded with: Import-Module ActiveDirectory
+- Commands that modify users, groups, OUs, or computers require appropriate permissions.
+- Get-ADDomain and Get-ADForest are useful for quickly identifying the current AD domain and forest.
+- Get-ADDomainController can list or discover available domain controllers.
+- Get-ADOrganizationalUnit is useful for finding OUs before using -Path, -SearchBase, or -TargetPath.
+- New-ADComputer can be used to pre-stage a computer account in Active Directory before the computer joins the domain.
 - Reset-ADComputer resets the computer account in Active Directory.
 - Reset-ADComputerMachinePassword resets the machine account password used by the computer to establish its secure channel with the domain.
 - Test-ComputerSecureChannel checks whether the computer's secure channel with the domain is working.
 - Enable-ADAccount and Disable-ADAccount can be used for both user and computer accounts.
 - Move-ADObject can move users or computers between OUs when the correct distinguished name and target OU are provided.
+- Membership in highly privileged groups such as Domain Admins, Enterprise Admins, and Schema Admins should only be changed when explicitly authorized.
+- Remote Desktop requires both Remote Desktop to be enabled and the appropriate Windows Firewall rule to allow the connection.
+- Remove-ADOrganizationalUnit is a destructive operation. Use it carefully and verify the target OU before running it.
