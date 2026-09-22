@@ -30,7 +30,10 @@ Get-Service | Where-Object Status -eq 'Running' | Set-Clipboard
 (Tests whether the target computer responds to WS-Management requests. Replace SERVER01 with the actual computer name or appropriate hostname.)
 
 # Start an interactive remote PowerShell session: Enter-PSSession -ComputerName SERVER01
-(Run this from the administrator workstation. It Starts an interactive PowerShell session on the specified remote computer)
+(Run this from the administrator workstation. It Starts an interactive PowerShell session on the specified remote computer) 
+
+#Get-filehash filename or, Get-filehash filename -Algorithm MD5
+Example: Get-filehash starwindconverter.exe or, Get-filehash starwindconverter.exe -Algorithm MD5 
 
 #Get-service
 
