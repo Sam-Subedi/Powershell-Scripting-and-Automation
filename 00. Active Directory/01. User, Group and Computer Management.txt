@@ -1,0 +1,216 @@
+Active Directory User, Group and Computer Management with PowerShell
+
+A practical collection of PowerShell commands for managing Active Directory users, groups, and computers.
+
+USER MANAGEMENT
+===============
+
+1. Create a user
+
+New-ADUser -Name "Sam Smith" -GivenName "Sam" -Surname "Smith" -SamAccountName "sam.smith" -UserPrincipalName "sam.smith@abc.local" -Path "OU=IT,OU=Employees,DC=abc,DC=local" -AccountPassword (Read-Host "Enter temporary password" -AsSecureString) -Enabled $true -ChangePasswordAtLogon $true
+
+
+2. Add the user to the required group
+
+Add-ADGroupMember -Identity "IT-Users" -Members "sam.smith"
+
+
+3. Get user information
+
+Get-ADUser -Identity "sam.smith"
+
+
+4. Get detailed user information
+
+Get-ADUser -Identity "sam.smith" -Properties *
+
+
+5. Enable a user account
+
+Enable-ADAccount -Identity "sam.smith"
+
+
+6. Disable a user account
+
+Disable-ADAccount -Identity "sam.smith"
+
+
+7. Unlock a locked user account
+
+Unlock-ADAccount -Identity "sam.smith"
+
+
+8. Check whether a user account is locked
+
+Get-ADUser -Identity "sam.smith" -Properties LockedOut | Select-Object Name, LockedOut
+
+
+9. Check account expiration information
+
+Get-ADUser -Identity "sam.smith" -Properties AccountExpirationDate | Select-Object Name, AccountExpirationDate
+
+
+10. Check password expiration information
+
+Get-ADUser -Identity "sam.smith" -Properties PasswordExpired, PasswordNeverExpires, PasswordLastSet | Select-Object Name, PasswordExpired, PasswordNeverExpires, PasswordLastSet
+
+
+11. Reset a user's password
+
+Set-ADAccountPassword -Identity "sam.smith" -Reset -NewPassword (Read-Host "Enter new password" -AsSecureString)
+
+
+12. Force the user to change their password at next logon
+
+Set-ADUser -Identity "sam.smith" -ChangePasswordAtLogon $true
+
+
+13. Get users from a specific OU
+
+Get-ADUser -SearchBase "OU=IT,OU=Employees,DC=abc,DC=local" -Filter *
+
+
+GROUP MANAGEMENT
+================
+
+14. Get group information
+
+Get-ADGroup -Identity "IT-Users"
+
+
+15. Get members of a group
+
+Get-ADGroupMember -Identity "IT-Users"
+
+
+16. Add a user to a group
+
+Add-ADGroupMember -Identity "IT-Users" -Members "sam.smith"
+
+
+17. Remove a user from a group
+
+Remove-ADGroupMember -Identity "IT-Users" -Members "sam.smith"
+
+
+18. Check which groups a user belongs to
+
+Get-ADPrincipalGroupMembership -Identity "sam.smith"
+
+
+COMPUTER MANAGEMENT
+===================
+
+19. Join the computer to the domain and rename it
+
+Add-Computer -DomainName "abc.local" -Server "DC01.abc.local" -NewName "abc-001" -Credential (Get-Credential) -Restart
+
+
+20. Check the computer's domain membership
+
+Get-CimInstance Win32_ComputerSystem | Select-Object Name, Domain, PartOfDomain
+
+
+21. Get computer information from Active Directory
+
+Get-ADComputer -Identity "abc-001"
+
+
+22. Get computers from a specific OU
+
+Get-ADComputer -SearchBase "OU=Computers,DC=abc,DC=local" -Filter *
+
+
+23. Enable a computer account
+
+Enable-ADAccount -Identity "abc-001"
+
+
+24. Disable a computer account
+
+Disable-ADAccount -Identity "abc-001"
+
+
+25. Move a computer to another OU
+
+Move-ADObject -Identity "CN=abc-001,CN=Computers,DC=abc,DC=local" -TargetPath "OU=Computers,DC=abc,DC=local"
+
+
+26. Remove a computer account from Active Directory
+
+Remove-ADComputer -Identity "abc-001" -Confirm
+
+
+ACCOUNT LOCKOUT AND DOMAIN INFORMATION
+======================================
+
+27. Get the domain password and account lockout policy
+
+Get-ADDefaultDomainPasswordPolicy
+
+
+28. Get a user's last logon information
+
+Get-ADUser -Identity "sam.smith" -Properties LastLogonDate | Select-Object Name, LastLogonDate
+
+
+29. Find locked-out user accounts
+
+Search-ADAccount -LockedOut
+
+
+30. Find disabled user accounts
+
+Search-ADAccount -AccountDisabled -UsersOnly
+
+
+QUICK REFERENCE
+===============
+
+Create user:
+New-ADUser
+
+Enable user/account:
+Enable-ADAccount
+
+Disable user/account:
+Disable-ADAccount
+
+Unlock user:
+Unlock-ADAccount
+
+Reset password:
+Set-ADAccountPassword
+
+Modify user:
+Set-ADUser
+
+Add user to group:
+Add-ADGroupMember
+
+Remove user from group:
+Remove-ADGroupMember
+
+View group members:
+Get-ADGroupMember
+
+View user's group membership:
+Get-ADPrincipalGroupMembership
+
+Join computer to domain:
+Add-Computer
+
+View AD computer:
+Get-ADComputer
+
+Move computer:
+Move-ADObject
+
+Remove computer:
+Remove-ADComputer
+
+Find locked accounts:
+Search-ADAccount -LockedOut
+
+View domain password policy:
+Get-ADDefaultDomainPasswordPolicy
