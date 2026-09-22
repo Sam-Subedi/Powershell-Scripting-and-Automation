@@ -1,0 +1,97 @@
+Powershell Cmdlets:
+# Test if a specific port is open on a server
+Test-NetConnection -ComputerName google.com -Port 443  or,Test-Netconnection google.com  or,Test-Netconnection google.com -port 443
+ 
+# Test-connection google.com  or,Test-connection google.com -Count 10 |Out-GridView
+
+# Test-NetConnection -ComputerName google.com -CommonTCPPort HTTP
+
+# Run a clean, detailed traceroute
+Test-NetConnection -ComputerName 8.8.8.8 -TraceRoute  or, Test-Netconnection google.com -Traceroute
+
+# Convert file lengths to Megabytes instantly
+Get-ChildItem | Select-Object Name, @{n="Size(MB)"; e={$_.Length / 1MB}}
+
+# Convert file lengths into human-readable Megabytes instantly
+Get-ChildItem *.* | Select-Object Name, @{Name="Size(MB)"; Expression={ [math]::round($_.Length / 1MB, 2) }}
+
+# Instant GUI Data Filtering: Append | Out-GridView -PassThru
+
+# Send Output Straight to Clipboard, Never copy text manually from the shell host
+Get-Service | Where-Object Status -eq 'Running' | Set-Clipboard
+
+# Enable PowerShell Remoting: Enable-PSRemoting -Force
+(Enables PowerShell remoting on the target Windows computer and configures the required WinRM components)
+
+# Check the WinRM service: Get-Service WinRM
+(Displays the status and configuration of the Windows Remote Management (WinRM) service)
+
+# Test WinRM connectivity: Test-WSMan SERVER01
+(Tests whether the target computer responds to WS-Management requests. Replace SERVER01 with the actual computer name or appropriate hostname.)
+
+# Start an interactive remote PowerShell session: Enter-PSSession -ComputerName SERVER01
+(Run this from the administrator workstation. It Starts an interactive PowerShell session on the specified remote computer)
+
+#Get-service
+
+# Test-NetConnection -ComputerName google.com -InformationLevel Detailed
+
+# Get-NetIPConfiguration -Detailed or, Get-NetIPConfiguration -All
+
+# Get-NetTCPConnection
+
+# Get-NetTCPConnection |
+    Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort, State, OwningProcess
+
+# Get-ADUser -Filter * | Select-Object Name, Enabled, LastLogonDate
+
+# Get-process
+
+# (Get-Process -Name explorer).Path
+
+# Get-CimInstance
+ 
+# Add-VMNetworkAdapterExtendedAcl
+ 
+# Set-VMNetworkAdapterVlan -Trunk
+
+# winget install Microsoft.WindowsAdminCenter
+
+
+Powershell Tricks:
+# | Format-Table -AutoSize
+
+# |Out-GridView
+
+# check parameters in powershell console: Get-Item - and press Ctrl+Space
+
+# Just drag a folder or file from file explorer into a powershell console, it will paste the entire path
+
+# In ISE, ctrl+T opens up a new terminal so you can keep separate variables and run multiple scripts at once
+
+# You can provide any cmdlet to it and it'll render a simple UI for it including tabs for different parametersets. It also has a help button to launch the get-help -showwindow option:
+
+Show-Command
+
+get-help -showwindow
+
+# Know location of PS executables: where.exe pwsh
+
+# Get-History
+
+# Get-content (Get-PSReadlineOption).HistorySavePath
+
+# Command |clip 
+
+# set-clipboard 
+
+# ~ stands for $HOME
+
+# Ctrl R : You can browse you command history 
+
+# With Psreadline module you could use the inline-view or list-view(my favorite) and get the history while typing in the terminal, it is time saver
+
+# create all folders and parent folders using new-item -force: New-Item -ItemType Directory -Path "C:\A\B\C" -Force
+
+
+
