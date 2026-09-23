@@ -7,13 +7,20 @@ net localgroup Administrators: To see the members of a local Administrators grou
 
 
 # Powershell Cmdlets:
-Get-LocalUser : To see local users
+Get-LocalUser : To lists all local user accounts
+Get-LocalUser -Name "Administrator" : To check one specific local account
+Get-LocalUser | Select-Object Name, Enabled, LastLogon : To check useful account details 
 Get-LocalUser -Name "username" : To see details about a specific user
+
+Get-ADPrincipalGroupMembership username | Select-Object Name : To Check which AD groups a user belongs to
+Get-ADPrincipalGroupMembership username | Select-Object Name : To Check which AD groups a specified user belongs to
+
 Get-LocalGroup : To check the local groups on a Windows machine
 Get-LocalGroupMember Administrators: To see the members of the local Administrators group
 Get-LocalGroupMember -Group "Administrators" : To see the members of the local Administrators group
 Get-LocalGroup -Name "Administrators" : To see details about the local Administrators group
 Get-LocalGroupMember -Group "Users" : To see the members of the local Users group
+
 Get-ComputerInfo : To see detailed information about the Windows machine
 Get-Service : To list Windows services
 Get-Process : To list running processes
