@@ -1,16 +1,3 @@
-# SOC Analyst - Windows & Active Directory Useful Commands
-# Purpose: Practical commands for SOC investigation, identity and privilege analysis,
-# account/group/computer investigation, process/service analysis, networking,
-# persistence hunting, and Windows event log review.
-#
-# Notes:
-# - Run commands from an elevated PowerShell session when required.
-# - Active Directory commands require the ActiveDirectory PowerShell module.
-# - Replace placeholders such as USERNAME, COMPUTERNAME, SERVER01, and DOMAIN.
-# - A command finding something suspicious does NOT by itself prove malicious activity.
-#   Always investigate the surrounding context, timeline, user, process, and events.
-
-
 # ============================================================
 # 1. CURRENT USER / HOST / DOMAIN INFORMATION
 # ============================================================
