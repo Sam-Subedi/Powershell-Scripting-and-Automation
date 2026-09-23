@@ -2,9 +2,16 @@
 net user: To see local users
 net user username:To see detailed information about a specific user account (Example: net user sam or, net user Administrator)
 net user Administrator: To see detailed information about the built-in Administrator account
+net user /domain : Lists user accounts in the domain
+net user username /domain : Shows details about a specific domain user
 net localgroup: Check the local groups on a Windows machine
 net localgroup Administrators: To see the members of a local Administrators group
 
+whoami /user : Shows the current user's username and SID
+whoami /groups : Shows groups the current user belongs to
+whoami /all : Shows user, groups, privileges, and other security information
+net config workstation : Shows workstation/computer configuration, including domain/workgroup information
+$env:COMPUTERNAME : Hostname
 
 # Powershell Cmdlets:
 Get-LocalUser : To lists all local user accounts
@@ -31,7 +38,7 @@ Get-NetIPAddress : To see IP addresses configured on the machine
 Get-NetTCPConnection : To see active TCP connections (netstat -ano)
 Get-WindowsOptionalFeature -Online : To see Windows optional features
 Get-HotFix : To see installed Windows updates/hotfixes
-$env:COMPUTERNAME : Hostname
+
 
 # Enable PowerShell Remoting: Enable-PSRemoting -Force
 (Enables PowerShell remoting on the target Windows computer and configures the required WinRM components)
