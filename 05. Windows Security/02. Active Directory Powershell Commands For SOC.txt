@@ -1,0 +1,1216 @@
+# SOC Analyst - Windows & Active Directory Useful Commands
+# Purpose: Practical commands for SOC investigation, identity and privilege analysis,
+# account/group/computer investigation, process/service analysis, networking,
+# persistence hunting, and Windows event log review.
+#
+# Notes:
+# - Run commands from an elevated PowerShell session when required.
+# - Active Directory commands require the ActiveDirectory PowerShell module.
+# - Replace placeholders such as USERNAME, COMPUTERNAME, SERVER01, and DOMAIN.
+# - A command finding something suspicious does NOT by itself prove malicious activity.
+#   Always investigate the surrounding context, timeline, user, process, and events.
+
+
+# ============================================================
+# 1. CURRENT USER / HOST / DOMAIN INFORMATION
+# ============================================================
+
+whoami
+Shows the currently logged-on user.
+
+whoami /user
+Shows the current user's username and SID.
+
+whoami /groups
+Shows groups the current user belongs to.
+
+whoami /priv
+Shows privileges assigned to the current user token.
+
+whoami /all
+Shows user, groups, privileges, SID, and other security information.
+
+$env:USERNAME
+Shows the current username.
+
+$env:USERDOMAIN
+Shows the user's domain.
+
+$env:COMPUTERNAME
+Shows the hostname.
+
+hostname
+Shows the computer hostname.
+
+Get-CimInstance Win32_ComputerSystem |
+Select-Object Name, Domain, PartOfDomain
+Shows computer name, domain/workgroup, and whether the computer is domain joined.
+
+Get-ComputerInfo
+Shows detailed Windows computer information.
+
+systeminfo
+Shows detailed operating system, hardware, domain, and patch information.
+
+net config workstation
+Shows workstation configuration, including domain/workgroup information.
+
+
+# ============================================================
+# 2. LOCAL USER ACCOUNT INVESTIGATION
+# ============================================================
+
+net user
+Lists local user accounts.
+
+net user USERNAME
+Shows detailed information about a specific local user.
+
+net user Administrator
+Shows details about the built-in Administrator account.
+
+Get-LocalUser
+Lists local user accounts.
+
+Get-LocalUser -Name "Administrator"
+Checks a specific local account.
+
+Get-LocalUser |
+Select-Object Name, Enabled, LastLogon
+Shows useful account details.
+
+Get-LocalUser |
+Select-Object Name, Enabled, Description, LastLogon,
+PasswordRequired, PasswordExpires, UserMayChangePassword
+Shows detailed local account security properties.
+
+Get-CimInstance Win32_UserAccount |
+Select-Object Name, Domain, LocalAccount, Disabled, Lockout, PasswordRequired, SID
+Shows local and domain account information.
+
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True"
+Shows local user accounts only.
+
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND Disabled = False"
+Shows enabled local user accounts.
+
+Get-CimInstance Win32_UserAccount -Filter "LocalAccount = True AND PasswordRequired = False"
+Identifies local accounts that do not require a password.
+
+Search-ADAccount -LockedOut
+Finds locked-out AD accounts.
+
+Search-ADAccount -AccountDisabled
+Finds disabled AD accounts.
+
+Search-ADAccount -PasswordNeverExpires
+Finds AD accounts configured with passwords that never expire.
+
+
+# ============================================================
+# 3. LOCAL GROUP / LOCAL ADMINISTRATOR INVESTIGATION
+# ============================================================
+
+net localgroup
+Lists local groups.
+
+net localgroup Administrators
+Shows members of the local Administrators group.
+
+Get-LocalGroup
+Lists local groups.
+
+Get-LocalGroup -Name "Administrators"
+Shows details about the local Administrators group.
+
+Get-LocalGroupMember -Group "Administrators"
+Shows members of the local Administrators group.
+
+Get-LocalGroupMember -Group "Users"
+Shows members of the local Users group.
+
+Get-LocalGroupMember Administrators |
+Format-Table
+
+Get-LocalGroupMember Administrators |
+Out-GridView
+Displays local Administrators membership for investigation/review.
+
+
+# ============================================================
+# 4. ACTIVE DIRECTORY - USER INVESTIGATION
+# ============================================================
+
+Get-ADUser USERNAME
+Gets basic information about an AD user.
+
+Get-ADUser USERNAME -Properties *
+Gets detailed information about an AD user.
+
+Get-ADUser USERNAME |
+Select-Object Name, SamAccountName, Enabled
+Checks basic account status.
+
+Get-ADUser USERNAME -Properties Enabled, LastLogonDate,
+PasswordLastSet, PasswordExpired, LockedOut
+Checks useful account and authentication-related properties.
+
+Get-ADUser USERNAME -Properties LastLogonDate
+Checks the user's LastLogonDate.
+
+Get-ADUser USERNAME -Properties PasswordLastSet
+Checks when the user's password was last changed.
+
+Get-ADUser USERNAME -Properties LockedOut
+Checks whether the account is locked out.
+
+Get-ADUser USERNAME -Properties DistinguishedName |
+Select-Object Name, DistinguishedName
+Shows the user's AD location/OU.
+
+Get-ADUser -Filter * |
+Select-Object Name, SamAccountName, Enabled
+Lists AD users and account status.
+
+Get-ADUser -Filter * -Properties WhenCreated |
+Sort-Object WhenCreated -Descending |
+Select-Object Name, SamAccountName, WhenCreated -First 20
+Shows recently created AD user accounts.
+
+Get-ADUser -Filter * -Properties LastLogonDate |
+Select-Object Name, SamAccountName, LastLogonDate |
+Sort-Object LastLogonDate
+Useful for reviewing account activity information.
+
+
+# ============================================================
+# 5. ACTIVE DIRECTORY - GROUP INVESTIGATION
+# ============================================================
+
+Get-ADGroup -Filter *
+Lists AD groups.
+
+Get-ADGroup "Domain Admins"
+Shows information about a specific AD group.
+
+Get-ADGroupMember "Domain Admins"
+Shows members of the Domain Admins group.
+
+Get-ADGroupMember "Domain Admins" -Recursive
+Shows direct and nested membership of Domain Admins.
+
+Get-ADGroupMember "Enterprise Admins"
+Shows members of Enterprise Admins.
+
+Get-ADGroupMember "Account Operators"
+Shows members of Account Operators.
+
+Get-ADGroupMember "Server Operators"
+Shows members of Server Operators.
+
+Get-ADGroupMember "Backup Operators"
+Shows members of Backup Operators.
+
+Get-ADGroupMember "Administrators"
+Shows members of the Administrators group where applicable.
+
+Get-ADPrincipalGroupMembership USERNAME
+Shows the Active Directory groups that the specified user is a member of.
+
+Get-ADPrincipalGroupMembership USERNAME |
+Select-Object Name
+Shows only the group names for a specified user.
+
+Get-ADPrincipalGroupMembership USERNAME |
+Select-Object Name, GroupScope, GroupCategory
+Shows useful group details for a user.
+
+Get-ADGroupMember "Domain Admins" |
+Select-Object Name, SamAccountName, ObjectClass
+Shows the objects and object types in Domain Admins.
+
+# Important SOC use:
+# When investigating a compromised account, determine whether the account
+# has direct or nested membership in privileged groups.
+
+
+# ============================================================
+# 6. ACTIVE DIRECTORY - COMPUTER INVESTIGATION
+# ============================================================
+
+Get-ADComputer -Filter *
+Lists AD computer accounts.
+
+Get-ADComputer COMPUTERNAME
+Gets information about a specific AD computer.
+
+Get-ADComputer COMPUTERNAME -Properties *
+Gets detailed information about a computer account.
+
+Get-ADComputer -Filter * |
+Select-Object Name, Enabled, DNSHostName
+Shows basic AD computer information.
+
+Get-ADComputer -Filter * -Properties OperatingSystem |
+Select-Object Name, Enabled, OperatingSystem
+Shows computer operating system information.
+
+Get-ADComputer -Filter * -Properties WhenCreated |
+Sort-Object WhenCreated -Descending |
+Select-Object Name, WhenCreated -First 20
+Shows recently created computer accounts.
+
+Search-ADAccount -ComputersOnly -AccountDisabled
+Finds disabled computer accounts.
+
+Get-ADDomainController -Filter *
+Lists domain controllers.
+
+
+
+
+# ============================================================
+# 10A. WINDOWS SERVICE MANAGEMENT / CONTAINMENT
+# ============================================================
+
+Get-Service -Name "SERVICE_NAME"
+Checks a specific Windows service.
+
+Start-Service -Name "SERVICE_NAME"
+Starts a Windows service.
+
+Stop-Service -Name "SERVICE_NAME"
+Stops a Windows service.
+
+Restart-Service -Name "SERVICE_NAME"
+Restarts a Windows service.
+
+Set-Service -Name "SERVICE_NAME" -StartupType Disabled
+Changes a service startup type to Disabled.
+
+Set-Service -Name "SERVICE_NAME" -StartupType Automatic
+Changes a service startup type to Automatic.
+
+Get-CimInstance Win32_Service |
+Select-Object Name,State,StartMode,StartName,PathName
+Reviews service state, startup mode, service account, and executable path.
+
+# SOC/security use:
+# Stop-Service may be used as a containment action when an approved response
+# procedure requires stopping a suspicious service.
+# Do not stop critical production services without authorization.
+
+
+# ============================================================
+# 9A. PROCESS MANAGEMENT / CONTAINMENT
+# ============================================================
+
+Get-Process -Id PROCESSID
+Gets information about a process by PID.
+
+Stop-Process -Id PROCESSID
+Stops a process by process ID.
+
+Stop-Process -Name "PROCESSNAME"
+Stops processes matching the specified process name.
+
+Stop-Process -Id PROCESSID -Force
+Forcefully terminates a process when required.
+
+Start-Process "C:\Path\program.exe"
+Starts a process/application.
+
+Get-CimInstance Win32_Process |
+Select-Object Name,ProcessId,ParentProcessId,ExecutablePath,CommandLine
+Reviews process execution and lineage.
+
+# SOC/security use:
+# Stopping a process can be an incident-containment action, but first capture
+# relevant evidence such as PID, command line, executable path, hash, parent
+# process, user, and network connections when the investigation requires it.
+
+
+# ============================================================
+# 7. ACTIVE DIRECTORY - DOMAIN / FOREST INFORMATION
+# ============================================================
+
+Get-ADDomain
+Shows information about the current AD domain.
+
+Get-ADForest
+Shows information about the AD forest.
+
+Get-ADDomainController -Filter *
+Lists domain controllers.
+
+Get-ADOrganizationalUnit -Filter *
+Lists organizational units.
+
+Get-ADOrganizationalUnit -Filter * |
+Select-Object Name, DistinguishedName
+Lists OUs and their distinguished names.
+
+Get-ADDomain |
+Select-Object DNSRoot, NetBIOSName, DomainMode
+Shows useful domain information.
+
+
+# ============================================================
+# 8. AD OBJECT DISCOVERY / ADMINISTRATION
+# ============================================================
+
+Get-ADObject -Filter *
+Lists AD objects.
+
+Get-ADObject -Filter * -Properties WhenCreated |
+Sort-Object WhenCreated -Descending |
+Select-Object Name, ObjectClass, WhenCreated -First 20
+Shows recently created AD objects.
+
+Get-ADUser -SearchBase "OU=Employee,DC=abc,DC=local" -Filter *
+Lists users within a specific OU.
+
+Get-ADComputer -SearchBase "OU=Employee,DC=abc,DC=local" -Filter *
+Lists computers within a specific OU.
+
+# Example for a different domain:
+# Replace the SearchBase with the actual OU distinguished name.
+
+
+# ============================================================
+# 9. PROCESS INVESTIGATION
+# ============================================================
+
+Get-Process
+Lists running processes.
+
+Get-Process | Sort-Object CPU -Descending
+Shows processes using the most CPU.
+
+Get-Process | Sort-Object WorkingSet -Descending
+Shows processes using the most memory.
+
+Get-Process powershell
+Checks for running PowerShell processes.
+
+Get-Process cmd
+Checks for running Command Prompt processes.
+
+Get-Process -Id PROCESSID
+Gets information about a specific process.
+
+Get-CimInstance Win32_Process
+Provides detailed process information.
+
+Get-CimInstance Win32_Process |
+Select-Object Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine
+Shows process name, PID, parent PID, executable path, and command line.
+
+Get-CimInstance Win32_Process |
+Where-Object { $_.ExecutablePath -like '*\AppData\*' } |
+Select-Object Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine
+Finds processes executing from AppData and displays useful process lineage information.
+
+Get-CimInstance Win32_Process |
+Where-Object { $_.Name -match 'powershell.exe|cmd.exe|wscript.exe|cscript.exe|mshta.exe|rundll32.exe|regsvr32.exe' } |
+Select-Object Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine
+Looks for commonly investigated Windows execution processes.
+
+Get-Process -Id PARENT_PROCESS_ID
+Retrieves information about a process using its PID.
+
+# SOC investigation focus:
+# Process -> Parent Process -> Command Line -> File Path -> User -> Network Connection
+
+
+# ============================================================
+# 10. WINDOWS SERVICES
+# ============================================================
+
+Get-Service
+Lists Windows services.
+
+Get-Service | Where-Object Status -eq "Running"
+Lists currently running services.
+
+Get-Service | Where-Object Status -eq "Stopped"
+Lists stopped services.
+
+Get-Service -Name "WinRM"
+Checks the WinRM service.
+
+Get-CimInstance Win32_Service
+Provides detailed Windows service information.
+
+Get-CimInstance Win32_Service |
+Select-Object Name, DisplayName, State, StartMode, StartName, PathName
+Shows service state, startup mode, service account, and executable path.
+
+Get-CimInstance Win32_Service |
+Where-Object {$_.StartMode -eq "Auto"} |
+Select-Object Name, State, StartName, PathName
+Reviews automatically starting services.
+
+# SOC investigation focus:
+# Look for unexpected services, unusual executable paths,
+# suspicious service accounts, or recently introduced services.
+
+
+# ============================================================
+# 11. SCHEDULED TASKS / PERSISTENCE
+# ============================================================
+
+Get-ScheduledTask
+Lists scheduled tasks.
+
+Get-ScheduledTask |
+Where-Object {$_.State -eq "Ready"}
+Shows scheduled tasks that are ready to run.
+
+Get-ScheduledTask |
+Select-Object TaskName, TaskPath, State
+Shows basic scheduled task information.
+
+Get-ScheduledTaskInfo -TaskName "TASKNAME"
+Shows information about a specific scheduled task.
+
+schtasks /query /fo LIST /v
+Displays detailed scheduled task information.
+
+# SOC investigation focus:
+# Review task name, author, trigger, action, executable path,
+# user account, and whether the task is expected.
+
+
+# ============================================================
+# 12. NETWORK CONFIGURATION / CONNECTIONS
+# ============================================================
+
+Get-NetIPConfiguration
+Shows network/IP configuration.
+
+Get-NetIPAddress
+Shows IP addresses configured on the computer.
+
+Get-NetTCPConnection
+Shows active TCP connections.
+
+Get-NetTCPConnection |
+Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort, State, OwningProcess
+Shows active TCP connections with the owning process ID.
+
+Get-NetTCPConnection -State Established
+Shows established TCP connections.
+
+netstat -ano
+Shows active connections, listening ports, and process IDs.
+
+netstat -abno
+Shows executable information associated with connections when run with appropriate privileges.
+
+Get-NetRoute
+Shows the routing table.
+
+Get-NetAdapter
+Shows network adapters.
+
+Get-DnsClientServerAddress
+Shows configured DNS servers.
+
+ipconfig /displaydns
+Displays the DNS resolver cache.
+
+Get-CimInstance -Namespace root\StandardCimv2 -ClassName MSFT_DNSClientCache
+Shows cached DNS resolution information.
+
+
+# ============================================================
+# 13. NETWORK CONNECTION -> PROCESS CORRELATION
+# ============================================================
+
+Get-NetTCPConnection |
+Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort,
+State, OwningProcess
+
+Get-Process -Id PROCESSID
+Use the OwningProcess/PID from Get-NetTCPConnection to identify the process.
+
+# SOC investigation flow:
+# Remote IP -> Connection -> Owning PID -> Process -> Executable Path
+# -> Parent Process -> Command Line -> User -> Timeline
+
+
+# ============================================================
+# 14. WINDOWS EVENT LOGS - BASIC COMMANDS
+# ============================================================
+
+Get-WinEvent -ListLog *
+Lists available Windows event logs.
+
+Get-WinEvent -ListLog * |
+Where-Object {$_.IsEnabled -eq $true}
+Lists enabled event logs.
+
+Get-WinEvent -LogName Security -MaxEvents 20
+Shows recent Security events.
+
+Get-WinEvent -LogName System -MaxEvents 20
+Shows recent System events.
+
+Get-WinEvent -LogName Application -MaxEvents 20
+Shows recent Application events.
+
+Get-WinEvent -LogName "Microsoft-Windows-PowerShell/Operational" -MaxEvents 20
+Shows recent PowerShell operational events.
+
+Get-WinEvent -LogName "Microsoft-Windows-Windows Defender/Operational" -MaxEvents 20
+Shows recent Windows Defender operational events.
+
+
+# ============================================================
+# 15. WINDOWS EVENT LOG - ERROR / WARNING REVIEW
+# ============================================================
+
+Get-WinEvent -FilterHashtable @{
+    LogName = 'System'
+    Level = 2
+} -MaxEvents 50
+Shows recent System Error events.
+
+Get-WinEvent -FilterHashtable @{
+    LogName = 'System'
+    Level = 3
+} -MaxEvents 50
+Shows recent System Warning events.
+
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Application'
+    Level = 2
+} -MaxEvents 50
+Shows recent Application Error events.
+
+Get-WinEvent -LogName Security -MaxEvents 100 |
+Where-Object {$_.LevelDisplayName -eq "Error"} |
+Select-Object TimeCreated, Id, ProviderName, Message
+Reviews Security events marked as errors.
+
+
+# ============================================================
+# 16. IMPORTANT WINDOWS SECURITY EVENT IDS
+# ============================================================
+
+# 4624 - Successful logon
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4624
+} -MaxEvents 20
+
+# 4625 - Failed logon
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4625
+} -MaxEvents 20
+
+# 4634 - Account logoff
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4634
+} -MaxEvents 20
+
+# 4647 - User initiated logoff
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4647
+} -MaxEvents 20
+
+# 4672 - Special privileges assigned to new logon
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4672
+} -MaxEvents 20
+
+# 4688 - New process created
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4688
+} -MaxEvents 20
+
+# 4697 - A service was installed
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4697
+} -MaxEvents 20
+
+# 4720 - User account created
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4720
+} -MaxEvents 20
+
+# 4722 - User account enabled
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4722
+} -MaxEvents 20
+
+# 4724 - Password reset attempted
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4724
+} -MaxEvents 20
+
+# 4725 - User account disabled
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4725
+} -MaxEvents 20
+
+# 4726 - User account deleted
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4726
+} -MaxEvents 20
+
+# 4732 - Member added to a security-enabled local group
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4732
+} -MaxEvents 20
+
+# 4733 - Member removed from a security-enabled local group
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4733
+} -MaxEvents 20
+
+# 4728 - Member added to a security-enabled global group
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4728
+} -MaxEvents 20
+
+# 4729 - Member removed from a security-enabled global group
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4729
+} -MaxEvents 20
+
+# 4738 - User account changed
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4738
+} -MaxEvents 20
+
+# 4740 - User account locked out
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4740
+} -MaxEvents 20
+
+# 4767 - User account unlocked
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4767
+} -MaxEvents 20
+
+# 4768 - Kerberos authentication ticket requested
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4768
+} -MaxEvents 20
+
+# 4769 - Kerberos service ticket requested
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4769
+} -MaxEvents 20
+
+# 4771 - Kerberos pre-authentication failed
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4771
+} -MaxEvents 20
+
+# 4776 - Domain controller attempted to validate credentials
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4776
+} -MaxEvents 20
+
+
+# ============================================================
+# 17. POWERSHELL LOGGING / INVESTIGATION
+# ============================================================
+
+Get-WinEvent -LogName "Microsoft-Windows-PowerShell/Operational" -MaxEvents 50
+
+# PowerShell Script Block Logging - Event ID 4104
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Microsoft-Windows-PowerShell/Operational'
+    Id = 4104
+} -MaxEvents 20
+
+# PowerShell Module Logging - Event ID 4103
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Microsoft-Windows-PowerShell/Operational'
+    Id = 4103
+} -MaxEvents 20
+
+# PowerShell engine lifecycle events - Event ID 400
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Microsoft-Windows-PowerShell/Operational'
+    Id = 400
+} -MaxEvents 20
+
+# PowerShell engine lifecycle events - Event ID 403
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Microsoft-Windows-PowerShell/Operational'
+    Id = 403
+} -MaxEvents 20
+
+
+# ============================================================
+# 18. WINDOWS DEFENDER / SECURITY PRODUCT EVENTS
+# ============================================================
+
+Get-WinEvent -LogName "Microsoft-Windows-Windows Defender/Operational" -MaxEvents 50
+
+Get-MpComputerStatus
+Shows Windows Defender status.
+
+Get-MpThreat
+Shows detected Defender threats.
+
+Get-MpThreatDetection
+Shows Defender threat detections.
+
+
+# ============================================================
+# 19. WMI INVESTIGATION / PERSISTENCE
+# ============================================================
+
+Get-CimInstance -Namespace root\subscription -ClassName __EventConsumer
+Lists WMI event consumers.
+
+Get-CimInstance -Namespace root\subscription -ClassName __EventFilter
+Lists WMI event filters.
+
+Get-CimInstance -Namespace root\subscription -ClassName __FilterToConsumerBinding
+Lists WMI filter-to-consumer bindings.
+
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Microsoft-Windows-WMI-Activity/Operational'
+    Id = 5858
+} -MaxEvents 10 |
+Format-List
+
+Reviews recent WMI Activity Event ID 5858 events.
+
+
+# ============================================================
+# 20. STARTUP / PERSISTENCE LOCATIONS
+# ============================================================
+
+Get-CimInstance Win32_StartupCommand
+Shows startup commands configured to run automatically.
+
+Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run"
+Checks the machine-level Run registry key.
+
+Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+Checks the current user's Run registry key.
+
+Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+Checks the machine-level RunOnce registry key.
+
+Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+Checks the current user's RunOnce registry key.
+
+
+# ============================================================
+# 21. SOFTWARE / APPLICATION INVESTIGATION
+# ============================================================
+
+Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" ,
+"HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" |
+Select-Object DisplayName, DisplayVersion, Publisher, InstallDate
+Enumerates software registered in common Windows uninstall registry locations.
+
+Get-CimInstance Win32_Product
+Lists software installed through Windows Installer (MSI).
+
+# Note:
+# Win32_Product can be slow and may trigger MSI consistency checks.
+# Prefer registry-based inventory for routine investigation when possible.
+
+
+# ============================================================
+# 22. REMOTE ACCESS / NETWORK SHARES
+# ============================================================
+
+Get-CimInstance Win32_NetworkConnection
+Shows network resource connections.
+
+Get-SmbMapping
+Shows SMB client mappings.
+
+Get-SmbConnection
+Shows active SMB client connections.
+
+Get-SmbShare
+Shows locally configured SMB shares.
+
+Get-CimInstance Win32_Share
+Shows locally configured shares.
+
+Get-CimInstance Win32_LogicalDisk -Filter "DriveType = 4"
+Shows mapped/network drives.
+
+net use
+Shows network connections and mapped drives.
+
+
+# ============================================================
+# 23. FILE / HASH INVESTIGATION
+# ============================================================
+
+Get-FileHash "C:\Path\file.exe"
+Calculates the default SHA256 hash of a file.
+
+Get-FileHash "C:\Path\file.exe" -Algorithm SHA256
+Calculates a SHA256 file hash.
+
+Get-Item "C:\Path\file.exe" |
+Select-Object FullName, Length, CreationTime, LastWriteTime, LastAccessTime
+Shows basic file metadata.
+
+Get-ChildItem "C:\Path" -Force
+Lists files including hidden items.
+
+Get-ChildItem "C:\Path" -Recurse -Force
+Recursively lists files including hidden items.
+
+
+# ============================================================
+# 24. WINDOWS UPDATE / PATCH INVESTIGATION
+# ============================================================
+
+Get-HotFix
+Lists installed Windows updates/hotfixes.
+
+Get-CimInstance Win32_QuickFixEngineering
+Lists installed Windows updates and patches.
+
+Get-WindowsOptionalFeature -Online
+Shows Windows optional features.
+
+
+# ============================================================
+# 25. SHADOW COPIES / RECOVERY INVESTIGATION
+# ============================================================
+
+Get-CimInstance Win32_ShadowCopy
+Shows Volume Shadow Copies.
+
+vssadmin list shadows
+Lists available Volume Shadow Copies.
+
+vssadmin list shadowstorage
+Shows Shadow Copy storage information.
+
+
+# ============================================================
+# 26. REMOTING / WINRM
+# ============================================================
+
+Enable-PSRemoting -Force
+Enables PowerShell remoting and configures required WinRM components.
+
+Get-Service WinRM
+Checks the WinRM service.
+
+Test-WSMan SERVER01
+Tests whether the target computer responds to WS-Management requests.
+
+Enter-PSSession -ComputerName SERVER01
+Starts an interactive remote PowerShell session.
+
+Invoke-Command -ComputerName SERVER01 -ScriptBlock { Get-Process }
+Runs a command remotely on the target computer.
+
+Invoke-Command -ComputerName SERVER01 -ScriptBlock { Get-Service }
+Gets services from a remote computer.
+
+# SOC investigation focus:
+# Verify whether remote administration activity is expected and correlate
+# remote execution with authentication and process creation events.
+
+
+# ============================================================
+# 27. LOGON / SESSION / REMOTE SESSION INVESTIGATION
+# ============================================================
+
+query user
+Shows currently logged-on users and sessions.
+
+quser
+Displays user sessions.
+
+qwinsta
+Displays terminal sessions.
+
+Get-CimInstance Win32_LoggedOnUser
+Shows associations between users and logon sessions.
+
+Get-CimInstance Win32_LogonSession
+Shows logon session information.
+
+Get-CimInstance Win32_ComputerSystem |
+Select-Object UserName
+Shows the currently logged-on interactive user where available.
+
+
+# ============================================================
+# 28. SYSTEM / DRIVER / HARDWARE DISCOVERY
+# ============================================================
+
+Get-CimInstance Win32_BIOS
+Provides BIOS version, serial number, and manufacturer details.
+
+Get-CimInstance Win32_Processor
+Provides CPU model, core count, clock speed, and status.
+
+Get-CimInstance Win32_PhysicalMemory
+Provides RAM information.
+
+Get-CimInstance Win32_BaseBoard
+Provides motherboard information.
+
+Get-CimInstance Win32_VideoController
+Provides GPU and driver information.
+
+Get-CimInstance Win32_NetworkAdapterConfiguration
+Provides network adapter configuration.
+
+
+# ============================================================
+# 29. COMMON SOC PROCESS / EXECUTION CHAIN
+# ============================================================
+
+# Example investigation workflow:
+
+Get-CimInstance Win32_Process |
+Select-Object Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine
+
+Get-Process -Id PROCESSID
+
+Get-NetTCPConnection |
+Where-Object {$_.OwningProcess -eq PROCESSID}
+
+# Investigation logic:
+# Process
+# -> Parent Process
+# -> Command Line
+# -> Executable Path
+# -> User
+# -> Network Connection
+# -> DNS activity
+# -> Security/PowerShell/EDR events
+# -> Before/after activity
+
+
+# ============================================================
+# 30. COMMON SOC ACCOUNT INVESTIGATION WORKFLOW
+# ============================================================
+
+# Example:
+# 1. Identify the account.
+Get-ADUser USERNAME -Properties *
+
+# 2. Check whether it is enabled/locked.
+Get-ADUser USERNAME -Properties Enabled,LockedOut
+
+# 3. Check group membership.
+Get-ADPrincipalGroupMembership USERNAME |
+Select-Object Name
+
+# 4. Check privileged groups if required.
+Get-ADGroupMember "Domain Admins" -Recursive
+
+# 5. Check recent account information.
+Get-ADUser USERNAME -Properties LastLogonDate,PasswordLastSet
+
+# 6. Correlate with Windows Security events.
+Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4624,4625,4672,4740
+} -MaxEvents 100
+
+
+# ============================================================
+# 31. COMMON SOC COMPUTER INVESTIGATION WORKFLOW
+# ============================================================
+
+# 1. Identify the AD computer.
+Get-ADComputer COMPUTERNAME -Properties *
+
+# 2. Check local administrators.
+Get-LocalGroupMember -Group "Administrators"
+
+# 3. Check running processes.
+Get-CimInstance Win32_Process |
+Select-Object Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine
+
+# 4. Check services.
+Get-CimInstance Win32_Service |
+Select-Object Name, State, StartMode, StartName, PathName
+
+# 5. Check scheduled tasks.
+Get-ScheduledTask |
+Select-Object TaskName, TaskPath, State
+
+# 6. Check active network connections.
+Get-NetTCPConnection |
+Select-Object LocalAddress,LocalPort,RemoteAddress,RemotePort,State,OwningProcess
+
+# 7. Check recent Security events.
+Get-WinEvent -LogName Security -MaxEvents 100
+
+
+# ============================================================
+# 32. HIGH-VALUE SOC COMMANDS TO REMEMBER
+# ============================================================
+
+whoami /all
+Shows identity, groups, privileges, and security information.
+
+Get-ADUser USERNAME -Properties *
+Detailed AD user investigation.
+
+Get-ADPrincipalGroupMembership USERNAME
+Shows AD group membership.
+
+Get-ADGroupMember "Domain Admins" -Recursive
+Investigates privileged group membership.
+
+Get-ADComputer COMPUTERNAME -Properties *
+Detailed AD computer investigation.
+
+Get-LocalGroupMember Administrators
+Investigates local administrator membership.
+
+Get-CimInstance Win32_Process |
+Select Name,ProcessId,ParentProcessId,ExecutablePath,CommandLine
+Investigates process execution and process lineage.
+
+Get-CimInstance Win32_Service |
+Select Name,State,StartMode,StartName,PathName
+Investigates Windows services and service persistence.
+
+Get-ScheduledTask
+Investigates scheduled tasks and persistence.
+
+Get-NetTCPConnection
+Investigates active network connections.
+
+Get-WinEvent -LogName Security -MaxEvents 100
+Reviews recent Windows Security events.
+
+Get-WinEvent -FilterHashtable @{LogName='Security';Id=4624,4625,4672,4688,4720,4728,4732,4740}
+Reviews high-value authentication, process, account, and group events.
+
+Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-PowerShell/Operational';Id=4103,4104}
+Reviews PowerShell module and script-block logging when those logs are enabled.
+
+Get-MpThreatDetection
+Reviews Windows Defender threat detections.
+
+Get-FileHash "C:\Path\file.exe" -Algorithm SHA256
+Calculates a file hash for investigation and comparison.
+
+
+# ============================================================
+# 33. WINDOWS SECURITY ADMINISTRATION / RESPONSE QUICK REFERENCE
+# ============================================================
+
+# Local user administration:
+New-LocalUser
+Creates a local user.
+
+Set-LocalUser
+Updates a local user.
+
+Enable-LocalUser
+Enables a local user.
+
+Disable-LocalUser
+Disables a local user.
+
+Remove-LocalUser
+Removes a local user.
+
+# Local group administration:
+Add-LocalGroupMember -Group "Administrators" -Member "USERNAME"
+Adds a user to a local group.
+
+Remove-LocalGroupMember -Group "Administrators" -Member "USERNAME"
+Removes a user from a local group.
+
+# Process response:
+Stop-Process -Id PROCESSID
+Stops a process by PID.
+
+Stop-Process -Name "PROCESSNAME"
+Stops a process by name.
+
+# Service response:
+Stop-Service -Name "SERVICE_NAME"
+Stops a service.
+
+Start-Service -Name "SERVICE_NAME"
+Starts a service.
+
+Restart-Service -Name "SERVICE_NAME"
+Restarts a service.
+
+Set-Service -Name "SERVICE_NAME" -StartupType Disabled
+Disables automatic service startup.
+
+# Important:
+# These commands can make immediate changes to endpoints.
+# In a SOC environment, follow the organization's authorization,
+# evidence-preservation, containment, and change-management procedures.
+
+
+# ============================================================
+# 34. SOC INVESTIGATION REMINDER
+# ============================================================
+
+# Do not treat one command result as proof of compromise.
+#
+# Always build context:
+#
+# USER
+#  ↓
+# GROUP / PRIVILEGE
+#  ↓
+# COMPUTER
+#  ↓
+# PROCESS
+#  ↓
+# PARENT PROCESS
+#  ↓
+# COMMAND LINE
+#  ↓
+# FILE / HASH
+#  ↓
+# NETWORK CONNECTION
+#  ↓
+# DNS
+#  ↓
+# WINDOWS EVENTS
+#  ↓
+# BEFORE / AFTER ACTIVITY
+#
+# The goal is to understand what happened, who performed it,
+# where it happened, whether it was expected, and what happened next.
