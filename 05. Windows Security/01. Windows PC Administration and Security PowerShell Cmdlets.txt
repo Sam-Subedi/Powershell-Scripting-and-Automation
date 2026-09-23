@@ -12,8 +12,9 @@ Get-LocalUser -Name "Administrator" : To check one specific local account
 Get-LocalUser | Select-Object Name, Enabled, LastLogon : To check useful account details 
 Get-LocalUser -Name "username" : To see details about a specific user
 
-Get-ADPrincipalGroupMembership username | Select-Object Name : To Check which AD groups a user belongs to
+Get-ADPrincipalGroupMembership username : Shows the Active Directory groups that the specified user is a member of. 
 Get-ADPrincipalGroupMembership username | Select-Object Name : To Check which AD groups a specified user belongs to
+Get-ADPrincipalGroupMembership username | Select Name : To Check which AD groups a specified user belongs to
 
 Get-LocalGroup : To check the local groups on a Windows machine
 Get-LocalGroupMember Administrators: To see the members of the local Administrators group
