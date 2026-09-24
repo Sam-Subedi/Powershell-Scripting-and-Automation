@@ -1,0 +1,93 @@
+# PowerShell Just Enough Administration (JEA): PowerShell Just Enough Administration (JEA) is a Windows security feature that provides restricted 
+administrative access through PowerShell remoting. It allows administrators to define which users or groups can connect to a specific endpoint and 
+which PowerShell commands they are permitted to use. JEA follows the principle of least privilege by allowing users to perform only the administrative 
+tasks they need, rather than providing unrestricted PowerShell access. This can help reduce the risk of accidental changes and misuse of administrative privileges.
+After connecting to the JEA endpoint, run Get-Command to list the commands available within the JEA session and verify that only the commands exposed by 
+the JEA configuration are available. You can also test a command that was deliberately not exposed, such as Get-ChildItem C:\, to verify that commands outside 
+the JEA role capability are restricted.
+
+After connecting, it would be useful to verify that the session is actually restricted:
+Get-Command (Lists the commands available within the JEA session, allowing you to verify that only the commands exposed by the JEA configuration are available)
+
+We can also test one of the commands you deliberately didn't expose, such as:
+Get-ChildItem C:\ (Can be used to verify that commands not exposed through the JEA role capability are restricted.)
+
+In this demonstration, we are deliberately exposing Get-Service, Restart-Service, and Get-Process through the JEA role capability. After connecting to the 
+JEA endpoint, run Get-Command to review the commands available within the JEA session. You can also test a command that was deliberately not exposed, 
+such as Get-ChildItem C:\, to verify that commands outside the configured JEA role capability are restricted.
+
+In the demonstration below, we will build and test a basic PowerShell JEA environment in four steps. We will start with Step 1: Create a JEA Endpoint, 
+where we create the required JEA folders and define the commands that will be available to the assigned role. In Step 2: Create the JEA Session Configuration,
+we associate that role with an Active Directory group and configure the restricted session. In Step 3: Register the JEA Endpoint, we register the configuration 
+so that it can be used as a PowerShell remoting endpoint. Finally, in Step 4: Connect Using the Restricted Endpoint, we connect to the endpoint and verify that the 
+configured restrictions are working as intended. The purpose of these four steps is to demonstrate how JEA can provide administrators with only the PowerShell
+capabilities they need, rather than giving them unrestricted administrative access.
+
+1. Create a JEA Endpoint
+Create the JEA directories:
+New-Item -Path "C:\ProgramData\JEA" -ItemType Directory -Force
+(Creates the directory used to store JEA configuration files)
+
+New-Item -Path "C:\ProgramData\JEA\RoleCapabilities" -ItemType Directory -Force
+(Creates the directory used to store JEA role capability files)
+
+Create the role capability file:
+New-PSRoleCapabilityFile -Path "C:\ProgramData\JEA\RoleCapabilities\ServerOperator.psrc"
+(Creates a JEA role capability file that defines the commands and capabilities available to the assigned role)
+
+Edit the role capability file:
+notepad "C:\ProgramData\JEA\RoleCapabilities\ServerOperator.psrc"
+(Opens the role capability file for editing)
+
+Example configuration:
+@{
+    VisibleCmdlets = @(
+        'Get-Service',
+        'Restart-Service',
+        'Get-Process'
+    )
+
+    VisibleFunctions = @()
+
+    VisibleExternalCommands = @()
+
+    ScriptsToProcess = @()
+}
+
+(Defines the PowerShell commands that users assigned to this JEA role are permitted to access)
+
+2. Create the JEA Session Configuration:
+New-PSSessionConfigurationFile `
+    -Path "C:\ProgramData\JEA\ServerOperator.pssc" `
+    -SessionType RestrictedRemoteServer `
+    -RoleDefinitions @{
+        "CONTOSO\ServerOperators" = @{
+            RoleCapabilities = "ServerOperator"
+        }
+    }
+
+(Creates a JEA session configuration that associates the specified AD group with the ServerOperator role capability and restricts the remote session)
+Replace: CONTOSO\ServerOperators with your actual AD group, for example:
+abc.local\JEA-ServerOperators
+
+3. Register the JEA Endpoint:
+Register-PSSessionConfiguration `
+    -Name "ServerOperator" `
+    -Path "C:\ProgramData\JEA\ServerOperator.pssc" `
+    -Force
+(Registers the JEA session configuration as a PowerShell remoting endpoint named ServerOperator)
+
+Check registered endpoints:
+Get-PSSessionConfiguration
+(Lists the PowerShell remoting session configurations available on the computer)
+You should see: ServerOperator
+
+4. Connect Using the Restricted Endpoint:
+From the administrator workstation:
+Enter-PSSession `
+    -ComputerName SERVER01 `
+    -ConfigurationName ServerOperator
+(Connects to SERVER01 through the restricted ServerOperator JEA endpoint. Replace SERVER01 with the actual target computer)
+For example, if Get-Service is exposed:
+Get-Service (This command can be used within the JEA session. Commands that have not been exposed through the role capability may not be available)
+

@@ -1,0 +1,1650 @@
+ACTIVE DIRECTORY SYSTEM ADMINISTRATOR & HELPDESK
+MASTER COMMAND LIST
+
+This is the merged, duplicate-free command reference for Active Directory
+System Administrator and Helpdesk work, organized in a practical workflow order.
+
+============================================================
+1. USER MANAGEMENT
+============================================================
+
+1. Get-ADUser
+Command:
+Get-ADUser -Identity username
+
+Example:
+Get-ADUser -Identity sam.smith
+
+What it does:
+Shows basic information about an Active Directory user.
+
+When to use it:
+Check whether a user exists and view basic account information.
+
+
+2. Get-ADUser -Properties *
+Command:
+Get-ADUser -Identity username -Properties *
+
+Example:
+Get-ADUser -Identity sam.smith -Properties *
+
+What it does:
+Shows detailed user attributes.
+
+When to use it:
+Troubleshoot an account or inspect user attributes.
+
+
+3. Get-ADUser -Filter *
+Command:
+Get-ADUser -Filter *
+
+Example:
+Get-ADUser -Filter *
+
+What it does:
+Lists Active Directory users.
+
+When to use it:
+View users in the domain.
+
+
+4. Get-ADUser with Select-Object
+Command:
+Get-ADUser -Filter * | Select-Object Name,SamAccountName,Enabled
+
+Example:
+Get-ADUser -Filter * | Select-Object Name,SamAccountName,Enabled
+
+What it does:
+Displays selected user properties.
+
+When to use it:
+Create simple reports or quickly check account status.
+
+
+============================================================
+2. CREATE AND MODIFY USERS
+============================================================
+
+5. New-ADUser
+Command:
+New-ADUser
+
+Example:
+New-ADUser `
+    -Name "Sam Smith" `
+    -GivenName "Sam" `
+    -Surname "Smith" `
+    -SamAccountName "sam.smith" `
+    -UserPrincipalName "sam.smith@abc.local" `
+    -Path "OU=Sales,OU=Employee,DC=abc,DC=local" `
+    -AccountPassword (Read-Host "Enter Password" -AsSecureString) `
+    -Enabled $true
+
+What it does:
+Creates a new Active Directory user.
+
+When to use it:
+Use it when onboarding a new employee or creating an approved account.
+
+
+6. Set-ADUser
+Command:
+Set-ADUser -Identity username
+
+Example:
+Set-ADUser -Identity sam.smith -Department "Sales" -Title "Sales Representative"
+
+What it does:
+Changes attributes of an existing user.
+
+When to use it:
+Update department, title, description, or other supported user attributes.
+
+
+============================================================
+3. ACCOUNT STATUS MANAGEMENT
+============================================================
+
+7. Enable-ADAccount
+Command:
+Enable-ADAccount -Identity username
+
+Example:
+Enable-ADAccount -Identity sam.smith
+
+What it does:
+Enables a disabled AD account.
+
+When to use it:
+Reactivate an approved user account.
+
+
+8. Disable-ADAccount
+Command:
+Disable-ADAccount -Identity username
+
+Example:
+Disable-ADAccount -Identity sam.smith
+
+What it does:
+Disables an AD account.
+
+When to use it:
+Temporarily disable an account or follow an offboarding process.
+
+
+9. Unlock-ADAccount
+Command:
+Unlock-ADAccount -Identity username
+
+Example:
+Unlock-ADAccount -Identity sam.smith
+
+What it does:
+Unlocks a locked AD user account.
+
+When to use it:
+Use it after a user is locked out.
+
+
+============================================================
+4. PASSWORD MANAGEMENT
+============================================================
+
+10. Set-ADAccountPassword
+Command:
+Set-ADAccountPassword
+
+Example:
+$Password = Read-Host "Enter New Password" -AsSecureString
+Set-ADAccountPassword -Identity sam.smith -NewPassword $Password -Reset
+
+What it does:
+Resets an AD user's password.
+
+When to use it:
+Use it for approved Helpdesk password resets.
+
+
+11. Force Password Change at Next Logon
+Command:
+Set-ADUser -Identity username -ChangePasswordAtLogon $true
+
+Example:
+Set-ADUser -Identity sam.smith -ChangePasswordAtLogon $true
+
+What it does:
+Requires the user to change the password at the next logon.
+
+When to use it:
+Commonly used after a Helpdesk password reset.
+
+
+============================================================
+5. GROUP MANAGEMENT
+============================================================
+
+12. Get-ADPrincipalGroupMembership
+Command:
+Get-ADPrincipalGroupMembership username
+
+Example:
+Get-ADPrincipalGroupMembership sam.smith
+
+What it does:
+Shows the AD groups that the user belongs to.
+
+When to use it:
+Check what access a user receives through group membership.
+
+
+13. Get-ADGroup
+Command:
+Get-ADGroup -Identity "GroupName"
+
+Example:
+Get-ADGroup -Identity "Sales-Users"
+
+What it does:
+Shows information about an AD group.
+
+When to use it:
+Check whether a group exists or inspect its properties.
+
+
+14. Get-ADGroup -Filter *
+Command:
+Get-ADGroup -Filter *
+
+Example:
+Get-ADGroup -Filter *
+
+What it does:
+Lists AD groups.
+
+When to use it:
+Find available groups in the domain.
+
+
+15. Get-ADGroupMember
+Command:
+Get-ADGroupMember -Identity "GroupName"
+
+Example:
+Get-ADGroupMember -Identity "Sales-Users"
+
+What it does:
+Shows members of an AD group.
+
+When to use it:
+Check who has access through a particular group.
+
+
+16. Get-ADGroupMember -Recursive
+Command:
+Get-ADGroupMember -Identity "GroupName" -Recursive
+
+Example:
+Get-ADGroupMember -Identity "Sales-Users" -Recursive
+
+What it does:
+Shows nested group membership recursively.
+
+When to use it:
+Understand the complete membership of a group.
+
+
+17. Add-ADGroupMember
+Command:
+Add-ADGroupMember -Identity "GroupName" -Members username
+
+Example:
+Add-ADGroupMember -Identity "Sales-Users" -Members sam.smith
+
+What it does:
+Adds a user or supported AD object to a group.
+
+When to use it:
+Grant access through approved group membership.
+
+
+18. Remove-ADGroupMember
+Command:
+Remove-ADGroupMember -Identity "GroupName" -Members username
+
+Example:
+Remove-ADGroupMember -Identity "Sales-Users" -Members sam.smith
+
+What it does:
+Removes a member from an AD group.
+
+When to use it:
+Remove access provided by a group.
+
+
+19. Add One User to Multiple Groups
+Command:
+"IT","Helpdesk","System-Admins" | ForEach-Object { Add-ADGroupMember -Identity $_ -Members "sam.smith" }
+
+Example:
+"IT","Helpdesk","System-Admins" | ForEach-Object { Add-ADGroupMember -Identity $_ -Members "sam.smith" }
+
+What it does:
+Adds the same user to multiple AD groups in one command.
+
+When to use it:
+Efficiently assign a user to several approved groups during onboarding or access changes.
+
+
+20. Add One Group to Another Group
+Command:
+Add-ADGroupMember -Identity "IT" -Members "Helpdesk"
+
+Example:
+Add-ADGroupMember -Identity "IT" -Members "Helpdesk"
+
+What it does:
+Adds one AD group as a member of another AD group.
+
+When to use it:
+Create approved group nesting so members of the nested group inherit access from the parent group.
+
+
+21. Add One Group to Multiple Groups
+Command:
+"IT","System-Admins" | ForEach-Object { Add-ADGroupMember -Identity $_ -Members "Helpdesk" }
+
+Example:
+"IT","System-Admins" | ForEach-Object { Add-ADGroupMember -Identity $_ -Members "Helpdesk" }
+
+What it does:
+Adds the same AD group as a member of multiple AD groups in one command.
+
+When to use it:
+Efficiently configure approved group nesting across multiple parent groups.
+
+
+22. Remove One User from Multiple Selected Groups
+Command:
+"IT","Helpdesk","System-Admins" | ForEach-Object { Remove-ADGroupMember -Identity $_ -Members "sam.smith" -Confirm:$false }
+
+Example:
+"IT","Helpdesk","System-Admins" | ForEach-Object { Remove-ADGroupMember -Identity $_ -Members "sam.smith" -Confirm:$false }
+
+What it does:
+Removes the same user from multiple selected AD groups in one command.
+
+When to use it:
+Efficiently remove approved group-based access during role changes or offboarding.
+
+
+23. Remove One Group from Another Group
+Command:
+Remove-ADGroupMember -Identity "IT" -Members "Helpdesk"
+
+Example:
+Remove-ADGroupMember -Identity "IT" -Members "Helpdesk"
+
+What it does:
+Removes one AD group from another AD group.
+
+When to use it:
+Remove an approved group-nesting relationship when the inherited access is no longer required.
+
+
+24. New-ADGroup
+Command:
+New-ADGroup
+
+Example:
+New-ADGroup `
+    -Name "Sales-Users" `
+    -GroupScope Global `
+    -GroupCategory Security `
+    -Path "OU=Sales,OU=Employee,DC=abc,DC=local"
+
+What it does:
+Creates an Active Directory group.
+
+When to use it:
+Create an approved security or distribution group.
+
+
+25. Remove-ADGroup
+Command:
+Remove-ADGroup -Identity "GroupName"
+
+Example:
+Remove-ADGroup -Identity "Sales-Users"
+
+What it does:
+Deletes an AD group.
+
+When to use it:
+Remove a group that is no longer required and has been approved for deletion.
+
+
+26. Check Group Type and Scope
+Command:
+Get-ADGroup -Identity "Sales-Users" |
+    Select-Object Name,GroupScope,GroupCategory
+
+Example:
+Get-ADGroup -Identity "Sales-Users" |
+    Select-Object Name,GroupScope,GroupCategory
+
+What it does:
+Shows the group's name, scope, and category.
+
+When to use it:
+Check how a group is configured.
+
+
+============================================================
+6. USER REMOVAL
+============================================================
+
+27. Remove-ADUser
+Command:
+Remove-ADUser -Identity username
+
+Example:
+Remove-ADUser -Identity sam.smith
+
+What it does:
+Deletes an AD user account.
+
+When to use it:
+Use it only when the account should be permanently removed according to organizational procedures.
+
+Important:
+Disabling an account is often preferred before deletion.
+
+
+============================================================
+7. COMPUTER ACCOUNT MANAGEMENT
+============================================================
+
+28. Get-ADComputer
+Command:
+Get-ADComputer -Identity "PC01"
+
+Example:
+Get-ADComputer -Identity "PC01"
+
+What it does:
+Shows information about an AD computer account.
+
+When to use it:
+Check whether a computer account exists.
+
+
+29. Get-ADComputer -Properties *
+Command:
+Get-ADComputer -Identity "PC01" -Properties *
+
+Example:
+Get-ADComputer -Identity "PC01" -Properties *
+
+What it does:
+Shows detailed computer account properties.
+
+When to use it:
+Troubleshoot computer accounts.
+
+
+30. Get-ADComputer -Filter *
+Command:
+Get-ADComputer -Filter *
+
+Example:
+Get-ADComputer -Filter * | Select-Object Name,Enabled
+
+What it does:
+Lists computer accounts.
+
+When to use it:
+View computers in the domain.
+
+
+31. Find Disabled Computers
+Command:
+Get-ADComputer -Filter 'Enabled -eq $false'
+
+Example:
+Get-ADComputer -Filter 'Enabled -eq $false'
+
+What it does:
+Finds disabled computer accounts.
+
+When to use it:
+Account cleanup and troubleshooting.
+
+
+32. New-ADComputer
+Command:
+New-ADComputer
+
+Example:
+New-ADComputer `
+    -Name "PC01" `
+    -SamAccountName "PC01$" `
+    -Path "OU=IT,OU=Employee,DC=abc,DC=local"
+
+What it does:
+Creates an AD computer account.
+
+When to use it:
+Prepare a computer account before joining a computer to the domain.
+
+
+33. Enable-ADAccount for a Computer
+Command:
+Enable-ADAccount -Identity "PC01$"
+
+Example:
+Enable-ADAccount -Identity "PC01$"
+
+What it does:
+Enables a disabled computer account.
+
+When to use it:
+Reactivate an approved computer account.
+
+
+34. Disable-ADAccount for a Computer
+Command:
+Disable-ADAccount -Identity "PC01$"
+
+Example:
+Disable-ADAccount -Identity "PC01$"
+
+What it does:
+Disables a computer account.
+
+When to use it:
+Retire a computer or temporarily prevent authentication.
+
+
+35. Reset-ComputerMachinePassword
+Command:
+Reset-ComputerMachinePassword
+
+Example:
+Reset-ComputerMachinePassword -Server "DC01"
+
+What it does:
+Resets the computer's machine account password with the domain.
+
+When to use it:
+Troubleshoot machine account or domain trust problems.
+
+
+36. Remove-ADComputer
+Command:
+Remove-ADComputer -Identity "PC01"
+
+Example:
+Remove-ADComputer -Identity "PC01"
+
+What it does:
+Deletes a computer account from AD.
+
+When to use it:
+Remove a retired computer account according to organizational procedures.
+
+
+============================================================
+8. ORGANIZATIONAL UNIT MANAGEMENT
+============================================================
+
+37. Get-ADOrganizationalUnit
+Command:
+Get-ADOrganizationalUnit -Filter *
+
+Example:
+Get-ADOrganizationalUnit -Filter * |
+    Select-Object Name,DistinguishedName
+
+What it does:
+Lists organizational units.
+
+When to use it:
+Find the correct OU for users or computers.
+
+
+38. Find a Specific OU
+Command:
+Get-ADOrganizationalUnit -Filter 'Name -eq "Sales"'
+
+Example:
+Get-ADOrganizationalUnit -Filter 'Name -eq "Sales"'
+
+What it does:
+Finds an OU by name.
+
+When to use it:
+Find the Distinguished Name before creating or moving objects.
+
+
+39. Get-ADUser -SearchBase
+Command:
+Get-ADUser -SearchBase "OU=Sales,OU=Employee,DC=abc,DC=local" -Filter *
+
+Example:
+Get-ADUser `
+    -SearchBase "OU=Sales,OU=Employee,DC=abc,DC=local" `
+    -Filter *
+
+What it does:
+Lists users in a specific OU.
+
+When to use it:
+Manage users department by department.
+
+
+40. Get-ADComputer -SearchBase
+Command:
+Get-ADComputer -SearchBase "OU=IT,OU=Employee,DC=abc,DC=local" -Filter *
+
+Example:
+Get-ADComputer `
+    -SearchBase "OU=IT,OU=Employee,DC=abc,DC=local" `
+    -Filter *
+
+What it does:
+Lists computers in a specific OU.
+
+When to use it:
+Manage computers by OU.
+
+
+41. Move-ADObject
+Command:
+Move-ADObject -Identity "ObjectDN" -TargetPath "TargetOU"
+
+Example:
+Move-ADObject `
+    -Identity "CN=PC01,CN=Computers,DC=abc,DC=local" `
+    -TargetPath "OU=IT,OU=Employee,DC=abc,DC=local"
+
+What it does:
+Moves an AD object to another OU.
+
+When to use it:
+Move users or computers to the correct OU.
+
+
+42. Get User Distinguished Name
+Command:
+Get-ADUser -Identity sam.smith |
+    Select-Object DistinguishedName
+
+Example:
+Get-ADUser -Identity sam.smith |
+    Select-Object DistinguishedName
+
+What it does:
+Shows the exact AD path of the user.
+
+When to use it:
+Useful before moving users or troubleshooting OU placement.
+
+
+============================================================
+9. AD ACCOUNT SEARCH
+============================================================
+
+43. Search-ADAccount
+Command:
+Search-ADAccount
+
+Examples:
+Search-ADAccount -LockedOut
+Search-ADAccount -AccountDisabled
+Search-ADAccount -PasswordNeverExpires
+
+What it does:
+Searches AD for accounts based on account status.
+
+When to use it:
+Find locked, disabled, or other account states.
+
+
+44. Search User by Email
+Command:
+Get-ADUser -Filter "EmailAddress -eq 'user@example.com'"
+
+Example:
+Get-ADUser -Filter "EmailAddress -eq 'sam@example.com'"
+
+What it does:
+Finds a user by email address.
+
+When to use it:
+Useful when you know the user's email but not their username.
+
+
+45. Search User by Name
+Command:
+Get-ADUser -Filter "Name -like '*Sam*'"
+
+Example:
+Get-ADUser -Filter "Name -like '*Smith*'"
+
+What it does:
+Finds users whose names match the search.
+
+When to use it:
+Useful when Helpdesk only knows the user's name.
+
+
+============================================================
+10. DOMAIN AND FOREST INFORMATION
+============================================================
+
+46. Get-ADDomain
+Command:
+Get-ADDomain
+
+Example:
+Get-ADDomain
+
+What it does:
+Displays information about the current AD domain.
+
+When to use it:
+Check domain information and configuration.
+
+
+47. Get-ADDomainController
+Command:
+Get-ADDomainController -Filter *
+
+Example:
+Get-ADDomainController -Filter *
+
+What it does:
+Lists domain controllers.
+
+When to use it:
+Check available DCs or troubleshoot authentication and domain connectivity.
+
+
+48. Get-ADForest
+Command:
+Get-ADForest
+
+Example:
+Get-ADForest
+
+What it does:
+Displays information about the AD forest.
+
+When to use it:
+Useful in environments with multiple domains or when checking forest-level information.
+
+
+============================================================
+11. CURRENT USER AND COMPUTER INFORMATION
+============================================================
+
+49. whoami
+Command:
+whoami
+
+Example:
+whoami
+
+What it does:
+Shows the currently logged-in user.
+
+When to use it:
+Confirm which account is being used.
+
+
+50. whoami /groups
+Command:
+whoami /groups
+
+Example:
+whoami /groups
+
+What it does:
+Shows security groups in the current logon session.
+
+When to use it:
+Troubleshoot access and permissions.
+
+
+51. whoami /priv
+Command:
+whoami /priv
+
+Example:
+whoami /priv
+
+What it does:
+Shows privileges assigned to the current security token.
+
+When to use it:
+Troubleshoot administrative permissions.
+
+
+52. $env:USERDOMAIN
+Command:
+$env:USERDOMAIN
+
+Example:
+$env:USERDOMAIN
+
+What it does:
+Shows the current Windows domain.
+
+When to use it:
+Quickly confirm the current domain.
+
+
+53. $env:USERNAME
+Command:
+$env:USERNAME
+
+Example:
+$env:USERNAME
+
+What it does:
+Shows the current username.
+
+When to use it:
+Quickly identify the current account or use it in scripts.
+
+
+54. hostname
+Command:
+hostname
+
+Example:
+hostname
+
+What it does:
+Shows the computer hostname.
+
+When to use it:
+Identify the workstation or server.
+
+
+55. Get-CimInstance Win32_ComputerSystem
+Command:
+Get-CimInstance Win32_ComputerSystem |
+    Select-Object Name,Domain,PartOfDomain
+
+Example:
+Get-CimInstance Win32_ComputerSystem |
+    Select-Object Name,Domain,PartOfDomain
+
+What it does:
+Shows computer name, domain, and domain membership status.
+
+When to use it:
+Troubleshoot domain join and authentication problems.
+
+
+============================================================
+12. ACCOUNT STATUS AND DOMAIN CONNECTIVITY
+============================================================
+
+56. Check User Account Details
+Command:
+Get-ADUser -Identity sam.smith `
+    -Properties Enabled,LockedOut,PasswordExpired,PasswordNeverExpires
+
+Example:
+Get-ADUser -Identity sam.smith `
+    -Properties Enabled,LockedOut,PasswordExpired,PasswordNeverExpires
+
+What it does:
+Checks important user account status.
+
+When to use it:
+Troubleshoot login problems.
+
+
+57. Test-ComputerSecureChannel
+Command:
+Test-ComputerSecureChannel
+
+Example:
+Test-ComputerSecureChannel -Verbose
+
+What it does:
+Tests the secure channel between the computer and the AD domain.
+
+When to use it:
+Troubleshoot domain trust and authentication problems.
+
+
+58. Repair Secure Channel
+Command:
+Test-ComputerSecureChannel -Repair
+
+Example:
+Test-ComputerSecureChannel -Repair -Credential (Get-Credential)
+
+What it does:
+Attempts to repair the computer's secure channel.
+
+When to use it:
+Use when the computer has a confirmed secure-channel or trust problem.
+
+
+59. Test-NetConnection
+Command:
+Test-NetConnection
+
+Example:
+Test-NetConnection dc01.abc.local -Port 389
+
+What it does:
+Tests network connectivity to a host and TCP port.
+
+When to use it:
+Troubleshoot connectivity to domain controllers and services.
+
+Common AD-related ports:
+53    DNS
+88    Kerberos
+135   RPC
+389   LDAP
+445   SMB
+464   Kerberos Password Change
+636   LDAPS
+3268  Global Catalog
+3269  Global Catalog over SSL
+
+
+60. nltest /dsgetdc
+Command:
+nltest /dsgetdc:abc.local
+
+Example:
+nltest /dsgetdc:abc.local
+
+What it does:
+Finds a domain controller for the specified domain.
+
+When to use it:
+Troubleshoot domain discovery and authentication.
+
+
+61. Resolve-DnsName
+Command:
+Resolve-DnsName
+
+Example:
+Resolve-DnsName dc01.abc.local
+
+What it does:
+Performs a DNS lookup.
+
+When to use it:
+Troubleshoot domain name resolution.
+
+
+62. Get-NetIPConfiguration
+Command:
+Get-NetIPConfiguration
+
+Example:
+Get-NetIPConfiguration
+
+What it does:
+Displays IP address, gateway, DNS, and adapter configuration.
+
+When to use it:
+Troubleshoot network and domain connectivity.
+
+
+63. Get-NetIPAddress
+Command:
+Get-NetIPAddress
+
+Example:
+Get-NetIPAddress -AddressFamily IPv4
+
+What it does:
+Displays configured IP addresses.
+
+When to use it:
+Check the workstation's IP configuration.
+
+
+============================================================
+13. WINDOWS SERVICES AND PROCESS MANAGEMENT
+============================================================
+
+64. Get-Process
+Command:
+Get-Process
+
+Example:
+Get-Process
+
+What it does:
+Lists running processes.
+
+When to use it:
+Troubleshoot applications or processes consuming resources.
+
+
+65. Get-Service
+Command:
+Get-Service
+
+Example:
+Get-Service
+
+What it does:
+Lists Windows services and their status.
+
+When to use it:
+Troubleshoot stopped or malfunctioning services.
+
+
+66. Get-Service for a Specific Service
+Command:
+Get-Service -Name "ServiceName"
+
+Example:
+Get-Service -Name "Spooler"
+
+What it does:
+Shows the status of a specific service.
+
+When to use it:
+Troubleshoot a particular service.
+
+
+67. Start-Service
+Command:
+Start-Service -Name "ServiceName"
+
+Example:
+Start-Service -Name "Spooler"
+
+What it does:
+Starts a Windows service.
+
+When to use it:
+Start a required service that is stopped.
+
+
+68. Stop-Service
+Command:
+Stop-Service -Name "ServiceName"
+
+Example:
+Stop-Service -Name "Spooler"
+
+What it does:
+Stops a Windows service.
+
+When to use it:
+Approved troubleshooting or maintenance.
+
+
+============================================================
+14. POWERSHELL REMOTING
+============================================================
+
+69. Test-WSMan
+Command:
+Test-WSMan
+
+Example:
+Test-WSMan PC01
+
+What it does:
+Tests whether Windows Remote Management is available.
+
+When to use it:
+Troubleshoot PowerShell Remoting.
+
+
+70. Enter-PSSession
+Command:
+Enter-PSSession -ComputerName PC01
+
+Example:
+Enter-PSSession -ComputerName PC01 -Credential (Get-Credential)
+
+What it does:
+Creates an interactive PowerShell session with a remote computer.
+
+When to use it:
+Remotely administer a Windows computer.
+
+
+71. Invoke-Command
+Command:
+Invoke-Command -ComputerName PC01 -ScriptBlock { Get-Service }
+
+Example:
+Invoke-Command -ComputerName PC01 -ScriptBlock {
+    Get-Service
+}
+
+What it does:
+Runs PowerShell commands on a remote computer.
+
+When to use it:
+Run administrative checks remotely, including across multiple computers.
+
+
+============================================================
+15. WINDOWS EVENT LOG MANAGEMENT
+============================================================
+
+72. Get-WinEvent
+Command:
+Get-WinEvent -LogName System
+
+Example:
+Get-WinEvent -LogName System -MaxEvents 20
+
+What it does:
+Retrieves Windows event logs.
+
+When to use it:
+Troubleshoot system, application, service, and other Windows problems.
+
+
+73. Get Error Events
+Command:
+Get-WinEvent -FilterHashtable @{
+    LogName='System'
+    Level=2
+} -MaxEvents 50
+
+Example:
+Get-WinEvent -FilterHashtable @{
+    LogName='System'
+    Level=2
+} -MaxEvents 50
+
+What it does:
+Retrieves error-level events from the System log.
+
+When to use it:
+Troubleshoot Windows errors.
+
+
+============================================================
+16. LOCAL WINDOWS ACCOUNT AND GROUP MANAGEMENT
+============================================================
+
+74. Get-LocalUser
+Command:
+Get-LocalUser
+
+Example:
+Get-LocalUser
+
+What it does:
+Lists local user accounts.
+
+When to use it:
+Check local accounts during Windows administration.
+
+
+75. Get-LocalGroup
+Command:
+Get-LocalGroup
+
+Example:
+Get-LocalGroup
+
+What it does:
+Lists local groups.
+
+When to use it:
+Check local groups and permissions.
+
+
+76. Get-LocalGroupMember
+Command:
+Get-LocalGroupMember -Group "Administrators"
+
+Example:
+Get-LocalGroupMember -Group "Administrators"
+
+What it does:
+Shows members of a local group.
+
+When to use it:
+Check who has local administrator privileges.
+
+
+77. Add-LocalGroupMember
+Command:
+Add-LocalGroupMember
+
+Example:
+Add-LocalGroupMember -Group "Remote Desktop Users" -Member "sam"
+
+What it does:
+Adds a local user or group to a local Windows group.
+
+When to use it:
+Give a user approved local permissions such as Remote Desktop access.
+
+
+78. Remove-LocalGroupMember
+Command:
+Remove-LocalGroupMember
+
+Example:
+Remove-LocalGroupMember -Group "Remote Desktop Users" -Member "sam"
+
+What it does:
+Removes a member from a local group.
+
+When to use it:
+Remove local permissions no longer required.
+
+
+============================================================
+17. SYSTEM MANAGEMENT
+============================================================
+
+79. Get-HotFix
+Command:
+Get-HotFix
+
+Example:
+Get-HotFix | Sort-Object InstalledOn -Descending
+
+What it does:
+Shows installed Windows updates and hotfixes.
+
+When to use it:
+Check installed updates during troubleshooting.
+
+
+80. Get-ComputerInfo
+Command:
+Get-ComputerInfo
+
+Example:
+Get-ComputerInfo |
+    Select-Object WindowsProductName,WindowsVersion,OsArchitecture
+
+What it does:
+Displays detailed Windows and computer information.
+
+When to use it:
+Gather system information.
+
+
+81. Restart-Computer
+Command:
+Restart-Computer
+
+Example:
+Restart-Computer -ComputerName PC01 -Force
+
+What it does:
+Restarts a Windows computer.
+
+When to use it:
+Approved maintenance, updates, configuration changes, or troubleshooting.
+
+Important:
+Confirm that restarting will not interrupt users or critical services.
+
+
+82. Stop-Computer
+Command:
+Stop-Computer
+
+Example:
+Stop-Computer -ComputerName PC01
+
+What it does:
+Shuts down a Windows computer.
+
+When to use it:
+Approved maintenance or decommissioning.
+
+
+============================================================
+18. ACTIVE DIRECTORY REPLICATION
+============================================================
+
+83. repadmin /replsummary
+Command:
+repadmin /replsummary
+
+Example:
+repadmin /replsummary
+
+What it does:
+Provides a summary of AD replication status.
+
+When to use it:
+Troubleshoot replication problems between domain controllers.
+
+
+84. repadmin /showrepl
+Command:
+repadmin /showrepl
+
+Example:
+repadmin /showrepl DC01
+
+What it does:
+Shows detailed replication information.
+
+When to use it:
+Investigate AD replication failures.
+
+
+85. repadmin /syncall
+Command:
+repadmin /syncall
+
+Example:
+repadmin /syncall /AdeP
+
+What it does:
+Requests AD replication synchronization.
+
+When to use it:
+Approved replication troubleshooting or maintenance.
+
+
+86. dcdiag
+Command:
+dcdiag
+
+Example:
+dcdiag /v
+
+What it does:
+Runs diagnostic tests against a domain controller.
+
+When to use it:
+Troubleshoot DNS, replication, services, authentication, and other DC issues.
+
+
+87. netdom query fsmo
+Command:
+netdom query fsmo
+
+Example:
+netdom query fsmo
+
+What it does:
+Shows which domain controllers hold FSMO roles.
+
+When to use it:
+Check FSMO role ownership.
+
+
+88. Get-ADReplicationSite
+Command:
+Get-ADReplicationSite -Filter *
+
+Example:
+Get-ADReplicationSite -Filter *
+
+What it does:
+Lists AD replication sites.
+
+When to use it:
+Work with multi-site AD environments.
+
+
+89. Get-ADReplicationSubnet
+Command:
+Get-ADReplicationSubnet -Filter *
+
+Example:
+Get-ADReplicationSubnet -Filter *
+
+What it does:
+Lists AD replication subnets.
+
+When to use it:
+Troubleshoot site and subnet configuration.
+
+
+============================================================
+19. GROUP POLICY MANAGEMENT
+============================================================
+
+90. gpupdate
+Command:
+gpupdate /force
+
+Example:
+gpupdate /force
+
+What it does:
+Forces Group Policy to refresh.
+
+When to use it:
+Use after a Group Policy change when the client needs to retrieve updated policy.
+
+
+91. gpresult
+Command:
+gpresult /r
+
+Example:
+gpresult /r
+
+What it does:
+Shows Group Policy settings applied to the current user and computer.
+
+When to use it:
+Troubleshoot why a Group Policy setting is or is not being applied.
+
+
+92. Generate Group Policy Report
+Command:
+gpresult /h report.html
+
+Example:
+gpresult /h C:\Temp\GPReport.html
+
+What it does:
+Creates an HTML Group Policy report.
+
+When to use it:
+Get detailed Group Policy information for troubleshooting.
+
+
+============================================================
+20. ACTIVE DIRECTORY POWERSHELL MODULE
+============================================================
+
+93. Get-Module ActiveDirectory
+Command:
+Get-Module ActiveDirectory
+
+Example:
+Get-Module ActiveDirectory
+
+What it does:
+Checks whether the Active Directory PowerShell module is loaded.
+
+When to use it:
+Useful when AD commands are not available.
+
+
+94. Import-Module ActiveDirectory
+Command:
+Import-Module ActiveDirectory
+
+Example:
+Import-Module ActiveDirectory
+
+What it does:
+Loads the Active Directory PowerShell module.
+
+When to use it:
+Use it when you need AD PowerShell commands.
+
+
+95. Get-Command -Module ActiveDirectory
+Command:
+Get-Command -Module ActiveDirectory
+
+Example:
+Get-Command -Module ActiveDirectory
+
+What it does:
+Lists commands provided by the Active Directory module.
+
+When to use it:
+Find available AD commands.
+
+
+96. Get-Help
+Command:
+Get-Help CommandName
+
+Example:
+Get-Help Get-ADUser -Examples
+
+What it does:
+Displays documentation and examples for a PowerShell command.
+
+When to use it:
+Use it when you need command syntax, parameters, or examples.
+
+
+============================================================
+QUICK HELPDESK COMMANDS TO MEMORIZE FIRST
+============================================================
+
+USER MANAGEMENT:
+Get-ADUser
+Get-ADUser -Properties *
+Set-ADUser
+New-ADUser
+Enable-ADAccount
+Disable-ADAccount
+Unlock-ADAccount
+Set-ADAccountPassword
+Set-ADUser -ChangePasswordAtLogon $true
+
+GROUP MANAGEMENT:
+Get-ADPrincipalGroupMembership
+Get-ADGroup
+Get-ADGroupMember
+Add-ADGroupMember
+Remove-ADGroupMember
+New-ADGroup
+Remove-ADGroup
+
+COMPUTER MANAGEMENT:
+Get-ADComputer
+Get-ADComputer -Properties *
+New-ADComputer
+Enable-ADAccount
+Disable-ADAccount
+Reset-ComputerMachinePassword
+Move-ADObject
+Remove-ADComputer
+
+DOMAIN AND OU:
+Get-ADOrganizationalUnit
+Get-ADDomain
+Get-ADDomainController
+Get-ADForest
+
+CONNECTIVITY:
+Get-CimInstance Win32_ComputerSystem
+Test-ComputerSecureChannel
+Test-NetConnection
+Resolve-DnsName
+nltest /dsgetdc
+
+SERVICES:
+Get-Service
+Start-Service
+Stop-Service
+
+EVENT LOGS:
+Get-WinEvent
+
+GROUP POLICY:
+gpupdate /force
+gpresult /r
+gpresult /h report.html
+
+LOCAL WINDOWS:
+Get-LocalUser
+Get-LocalGroup
+Get-LocalGroupMember
+Add-LocalGroupMember
+Remove-LocalGroupMember
+
+REMOTE MANAGEMENT:
+Test-WSMan
+Enter-PSSession
+Invoke-Command
+
+SYSTEM:
+Get-HotFix
+Get-ComputerInfo
+Restart-Computer
+Stop-Computer
+
+
+============================================================
+PRACTICAL HELPDESK WORKFLOW
+============================================================
+
+EXAMPLE 1: USER CANNOT LOG IN
+
+Step 1: Check the account.
+
+Get-ADUser -Identity sam.smith -Properties Enabled,LockedOut,PasswordExpired
+
+Step 2: If locked, unlock it.
+
+Unlock-ADAccount -Identity sam.smith
+
+Step 3: Reset the password if required.
+
+$Password = Read-Host "Enter New Password" -AsSecureString
+Set-ADAccountPassword -Identity sam.smith -NewPassword $Password -Reset
+
+Step 4: Force a password change.
+
+Set-ADUser -Identity sam.smith -ChangePasswordAtLogon $true
+
+Step 5: Check group membership if the user can log in but cannot access something.
+
+Get-ADPrincipalGroupMembership sam.smith
+
+
+EXAMPLE 2: COMPUTER HAS A DOMAIN ISSUE
+
+Step 1: Check domain membership.
+
+Get-CimInstance Win32_ComputerSystem |
+    Select-Object Name,Domain,PartOfDomain
+
+Step 2: Test the secure channel.
+
+Test-ComputerSecureChannel -Verbose
+
+Step 3: Test connectivity to the domain controller.
+
+Test-NetConnection dc01.abc.local -Port 389
+
+
+EXAMPLE 3: GROUP POLICY ISSUE
+
+Step 1: Force Group Policy update.
+
+gpupdate /force
+
+Step 2: Check applied policies.
+
+gpresult /r
+
+Step 3: Generate a detailed report.
+
+gpresult /h C:\Temp\GPReport.html
+
+
+EXAMPLE 4: WINDOWS TROUBLESHOOTING
+
+Step 1: Check Windows services.
+
+Get-Service
+
+Step 2: Check recent System events.
+
+Get-WinEvent -LogName System -MaxEvents 50
+
+Step 3: Check installed updates.
+
+Get-HotFix | Sort-Object InstalledOn -Descending
+
+Step 4: Gather computer information.
+
+Get-ComputerInfo
+
+
+============================================================
+END OF ACTIVE DIRECTORY SYSTEM ADMINISTRATOR &
+HELPDESK MASTER COMMAND LIST
+============================================================
