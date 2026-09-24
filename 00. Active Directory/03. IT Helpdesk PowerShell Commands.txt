@@ -1,8 +1,3 @@
-ACTIVE DIRECTORY SYSTEM ADMINISTRATOR & HELPDESK
-MASTER COMMAND LIST
-
-This is the merged, duplicate-free command reference for Active Directory
-System Administrator and Helpdesk work, organized in a practical workflow order.
 
 ============================================================
 1. USER MANAGEMENT
@@ -1644,7 +1639,3 @@ Step 4: Gather computer information.
 Get-ComputerInfo
 
 
-============================================================
-END OF ACTIVE DIRECTORY SYSTEM ADMINISTRATOR &
-HELPDESK MASTER COMMAND LIST
-============================================================
