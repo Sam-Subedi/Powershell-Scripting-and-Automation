@@ -833,9 +833,9 @@ $headerHtml = @"
             <div class='hero-status'>Built for operations teams, IT managers, and customer-facing reporting.</div>
         </div>
         <div class='logo-box'>
-            <strong>YouTube - Labs Hands On</strong>
-            Vikas Singh<br/>
-            vikas.9452@gmail.com
+            <strong>YouTube - Tech Hub</strong>
+            Sam Tech<br/>
+            info@gmail.com
         </div>
     </div>
 </div>
