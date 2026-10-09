@@ -1,9 +1,9 @@
 ﻿$MailParams = @{
-    To          = "admin@labshandson.in"
-    From        = "AD-Monitor@@labshandson.in"
+    To          = "admin@abc.local"
+    From        = "abc.local"
     Subject     = "Daily AD Health Report - $Forest"
     Body        = "Please find the attached Active Directory Health Report for $Forest."
     Attachments = $ReportPath
-    SmtpServer  = "smtp.@labshandson.in"
+    SmtpServer  = "smtp.@abc.local"
 }
 Send-MailMessage @MailParams
