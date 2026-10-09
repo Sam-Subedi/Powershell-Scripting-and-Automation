@@ -112,11 +112,11 @@ $FullHTML | Out-File $ReportPath
 
 Write-Host "Success! Report saved to: $ReportPath" -ForegroundColor Green
 $MailParams = @{
-    To          = "admin@labshandson.in"
-    From        = "AD-Monitor@@labshandson.in"
+    To          = "admin@abc.local"
+    From        = "AD-Monitor@@abc.local"
     Subject     = "Daily AD Health Report - $Forest"
     Body        = "Please find the attached Active Directory Health Report for $Forest."
     Attachments = $ReportPath
-    SmtpServer  = "smtp.@labshandson.in"
+    SmtpServer  = "smtp.@abc.local"
 }
 Send-MailMessage @MailParams
