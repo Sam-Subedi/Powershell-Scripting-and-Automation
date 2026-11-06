@@ -48,8 +48,7 @@ Get-AuthenticodeSignature "$env:APPDATA\FireShot\2.1.4\fireshot-chrome-plugin.ex
 Format-List Path, Status, StatusMessage, SignerCertificate
 
 # Process Details Check CPU and Memory: Identify processes consuming system resources.
-Get-Process |
-Sort-Object WorkingSet64 -Descending |
+Get-Process |Sort-Object WorkingSet64 -Descending |
 Select-Object -First 20 Name, Id, CPU, WorkingSet64 |
 Format-Table -AutoSize
 
