@@ -1,0 +1,49 @@
+# Process Executable Location: Find the executable location of a running process.
+
+Syntax: 
+Get-Process -Id number | Select-Object Name, Id, Path | Format-List
+
+Example:
+Get-Process -Id 14328 | Select-Object Name, Id, Path | Format-List
+
+#  Process Parent and CommandLine: Identify the parent process and see the full command line used to launch it.
+
+Syntax 1: Check a specific process (PID)
+Get-CimInstance Win32_Process -Filter "ProcessId = pid" |
+Select-Object Name, ProcessId, ParentProcessId, CommandLine |Format-List
+
+Syntax 2: Check multiple processes (PIDs)
+Get-CimInstance Win32_Process |
+Where-Object {$_.ProcessId -eq pid1 -or $_.ProcessId -eq pid2} |
+Select-Object Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine | Format-List
+
+Example 1: Check a specific process
+Get-CimInstance Win32_Process -Filter "ProcessId = 14328" |
+Select-Object Name, ProcessId, ParentProcessId, CommandLine |Format-List
+
+Example 2: Check multiple processes
+Get-CimInstance Win32_Process |
+Where-Object {$_.ProcessId -eq 14328 -or $_.ProcessId -eq 6340} |
+Select-Object Name, ProcessId, ParentProcessId, ExecutablePath, CommandLine | Format-List
+
+# Digital Signature Verification: Verify the digital signature of an executable or other supported file.
+
+Syntax 1: Using a variable
+$file = Read-Host "Enter the full file path"
+Get-AuthenticodeSignature -FilePath $file |
+Format-List Path, Status, StatusMessage, SignerCertificate
+Note: Remove Read-Host if you already know the exact file path. You can enter the file path directly into the $file variable.
+
+Syntax 2: Direct File Path
+Get-AuthenticodeSignature "FilePath" |
+Format-List Path, Status, StatusMessage, SignerCertificate
+
+Example 1: Using a Variable
+$file = "$env:APPDATA\FireShot\2.1.4\fireshot-chrome-plugin.exe"
+Get-AuthenticodeSignature -FilePath $file |
+Format-List Path, Status, StatusMessage, SignerCertificate
+
+Example 2: Direct File Path
+Get-AuthenticodeSignature "$env:APPDATA\FireShot\2.1.4\fireshot-chrome-plugin.exe" |
+Format-List Path, Status, StatusMessage, SignerCertificate
+
