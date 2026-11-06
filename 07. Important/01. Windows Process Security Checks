@@ -47,3 +47,27 @@ Example 2: Direct File Path
 Get-AuthenticodeSignature "$env:APPDATA\FireShot\2.1.4\fireshot-chrome-plugin.exe" |
 Format-List Path, Status, StatusMessage, SignerCertificate
 
+# Process Details Check CPU and Memory: Identify processes consuming system resources.
+Get-Process |
+Sort-Object WorkingSet64 -Descending |
+Select-Object -First 20 Name, Id, CPU, WorkingSet64 |
+Format-Table -AutoSize
+
+# Process Network Connections: Identify network connections associated with a process.
+Get-NetTCPConnection |
+Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort, State, OwningProcess |
+Format-Table -AutoSize
+
+To investigate a particular PID Network Connection:
+Get-NetTCPConnection -OwningProcess 14328 |
+Format-Table -AutoSize
+
+#  Process Start Time: Check when a process started running.
+Get-Process -Id 14328 |Select-Object Name, Id, StartTime | Format-List
+
+# Check File Hash (SHA256): Calculate a file's SHA256 hash for integrity checking and security investigation. 
+Get-FileHash -Algorithm SHA256 -Path "Filepath" |Format-List
+
+# Check Running Services: Identify running Windows services.
+Get-Service |Where-Object {$_.Status -eq "Running"} |Format-Table Name, DisplayName, Status -AutoSize
+
