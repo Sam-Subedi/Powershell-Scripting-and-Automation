@@ -1,0 +1,193 @@
+
+WinGet (Windows Package Manager) is Microsoft's command-line tool for managing software on Windows 10 and Windows 11. It as an app store that works through CMD or PowerShell instead of a graphical interface.
+
+We can use it to:
+
+-Download and install applications.
+
+-Uninstall applications.
+
+-Search for available software.
+
+-Update installed applications.
+
+-Check installed software versions.
+
+-Export and restore application lists.
+
+
+winget --version:
+Check which version of WinGet is installed.
+
+winget --info:
+Show WinGet system information, configuration, and log locations.
+
+winget list:
+Display applications installed on your computer, including those installed outside WinGet.
+
+winget settings:
+Open the WinGet configuration settings file.
+
+
+
+winget --help:
+Show all available WinGet commands and their descriptions.
+
+winget install --help:
+Display all available installation options.
+
+winget uninstall --help:
+Display all available uninstall options.
+
+winget upgrade --help:
+Display all available update options.
+
+winget search --help:
+Display all available search options.
+
+
+
+winget source list:
+Display all configured package repositories.
+
+winget source update:
+WinGet sources are repositories where WinGet searches for application packages.
+
+winget upgrade: 
+Display installed applications that have newer versions available.
+
+winget upgrade --all: 
+Download and install available updates for all eligible applications.
+
+winget source reset:
+Reset WinGet sources to their default configuration. This is mainly useful for troubleshooting.
+
+
+
+winget search "Google Chrome":
+Search the WinGet repositories for Google Chrome.
+
+winget search chrome:
+Search available software packages for Google Chrome.
+
+winget list --id Google.Chrome:
+Check whether Google Chrome is listed as installed.
+
+winget list --id Google.Chrome -e:
+Check whether Google Chrome is listed among installed applications using its exact package ID.
+
+winget show --id Google.Chrome:
+Display information about an application, including its package details and installer information.
+
+winget install Google.Chrome:
+Download and install Google Chrome.
+
+winget install --id=Google.Chrome -e:
+Find, download and install Google Chrome using its exact package ID.
+
+winget install --id Google.Chrome -e --silent --accept-package-agreements --accept-source-agreements:
+Download and install Google Chrome without displaying the installer's graphical interface, while automatically accepting the package and source agreements.
+
+winget install --id Google.Chrome -e --source winget --accept-package-agreements --accept-source-agreements:
+Install Google Chrome specifically from the WinGet community repository rather than searching other sources.
+
+winget uninstall Google.Chrome:
+Uninstall Google Chrome from your computer.
+
+winget uninstall --id Google.Chrome -e:
+Find and uninstall Google Chrome using its exact package ID.
+
+winget uninstall --id Google.Chrome -e --silent:
+Uninstall Google Chrome without displaying the uninstaller's graphical interface, if supported by its uninstaller.
+
+winget upgrade --id Google.Chrome:
+Check for and install an available Google Chrome update.
+
+
+
+
+winget search "System Informer":
+Search the WinGet repositories for System Informer.
+
+winget search Systeminformer:
+Search the WinGet repositories for System Informer.
+
+winget list --id WinsiderSS.SystemInformer:
+Check whether System Informer is listed as installed.
+
+winget list --id WinsiderSS.SystemInformer -e:
+Check whether System Informer is listed among installed applications using its exact package ID.
+
+winget show --id WinsiderSS.SystemInformer:
+Display information about System Informer, including its package details and installer information.
+
+winget install WinsiderSS.SystemInformer:
+Download and install System Informer.
+
+winget install --id=WinsiderSS.SystemInformer -e:
+Find, download and install System Informer using its exact package ID.
+
+winget install --id WinsiderSS.SystemInformer -e --silent --accept-package-agreements --accept-source-agreements:
+Download and install System Informer without displaying the installer's graphical interface, while automatically accepting the package and source agreements.
+
+winget install --id WinsiderSS.SystemInformer -e --source winget --accept-package-agreements --accept-source-agreements:
+Install System Informer specifically from the WinGet community repository rather than searching other sources.
+
+winget uninstall WinsiderSS.SystemInformer:
+Uninstall System Informer from your computer.
+
+winget uninstall --id WinsiderSS.SystemInformer -e:
+Find and uninstall System Informer using its exact package ID.
+
+winget uninstall --id WinsiderSS.SystemInformer -e --silent:
+Uninstall System Informer without displaying the uninstaller's graphical interface, if supported by its uninstaller.
+
+winget upgrade --id WinsiderSS.SystemInformer:
+Check for and install an available System Informer update.
+winget search "Process Explorer":
+Search the WinGet repositories for Process Explorer.
+
+
+
+
+winget search "Process Explorer":
+Search the WinGet repositories for Process Explorer.
+
+winget search ProcessExplorer:
+Search the WinGet repositories for Process Explorer.
+
+winget list --id Microsoft.Sysinternals.ProcessExplorer:
+Check whether Process Explorer is listed as installed.
+
+winget list --id Microsoft.Sysinternals.ProcessExplorer -e:
+Check whether Process Explorer is listed among installed applications using its exact package ID.
+
+winget show --id Microsoft.Sysinternals.ProcessExplorer:
+Display information about Process Explorer, including its package details and installer information.
+
+winget install Microsoft.Sysinternals.ProcessExplorer:
+Download and install Microsoft Process Explorer.
+
+winget install --id Microsoft.Sysinternals.ProcessExplorer -e:
+Find, download and install Process Explorer using its exact package ID.
+
+winget install --id Microsoft.Sysinternals.ProcessExplorer -e --silent --accept-package-agreements --accept-source-agreements:
+Download and install Process Explorer without displaying the installer's graphical interface, while automatically accepting the package and source agreements.
+
+winget install --id Microsoft.Sysinternals.ProcessExplorer -e --source winget --accept-package-agreements --accept-source-agreements:
+Install Process Explorer specifically from the WinGet community repository rather than searching other sources.
+
+winget uninstall Microsoft.Sysinternals.ProcessExplorer:
+Uninstall Process Explorer from your computer.
+
+winget uninstall --id Microsoft.Sysinternals.ProcessExplorer -e:
+Find and uninstall Process Explorer using its exact package ID.
+
+winget uninstall --id Microsoft.Sysinternals.ProcessExplorer -e --silent:
+Uninstall Process Explorer without displaying the uninstaller's graphical interface, if supported by its uninstaller.
+
+winget upgrade --id Microsoft.Sysinternals.ProcessExplorer:
+Check for and install an available Process Explorer update.
+
+
+
